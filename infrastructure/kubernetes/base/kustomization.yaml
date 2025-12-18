@@ -5,30 +5,23 @@ namespace: trii-dev
 
 resources:
   - namespace.yaml
-  - configmap.yaml
   - secrets.yaml
-  - rabbitmq/statefulset.yaml
-  - rabbitmq/service.yaml
-  - minio/statefulset.yaml
-  - minio/service.yaml
-  - postgres/statefulset.yaml
   - postgres/configmap.yaml
   - postgres/service.yaml
-  - redis/statefulset.yaml
+  - postgres/statefulset.yaml
   - redis/service.yaml
-  - market-data/deployment.yaml
+  - redis/statefulset.yaml
+  - rabbitmq/service.yaml
+  - rabbitmq/statefulset.yaml
+  - minio/service.yaml
+  - minio/statefulset.yaml
   - market-data/service.yaml
-  - market-data/ingress.yaml
-  - analysis-engine/deployment.yaml
+  - market-data/deployment.yaml
   - analysis-engine/service.yaml
-  - portfolio-manager/deployment.yaml
+  - analysis-engine/deployment.yaml
   - portfolio-manager/service.yaml
-  - ml-prediction/deployment.yaml
+  - portfolio-manager/deployment.yaml
   - ml-prediction/service.yaml
-  - ingress/trii-platform-ingress.yaml
-
-commonLabels:
-  app.kubernetes.io/name: trii-platform
-  app.kubernetes.io/managed-by: argocd
+  - ml-prediction/deployment.yaml
 
 images: []
