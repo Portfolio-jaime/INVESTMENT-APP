@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: trii-dev
+data:
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "development"
+  REDIS_HOST: "redis-service"
+  RABBITMQ_HOST: "rabbitmq-service"
+  POSTGRES_HOST: "postgres-service"
+  MINIO_HOST: "minio-service"

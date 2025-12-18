@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-manager
+  namespace: trii-dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portfolio-manager
+  template:
+    metadata:
+      labels:
+        app: portfolio-manager
+        app.kubernetes.io/name: portfolio-manager
+        app.kubernetes.io/component: service
+    spec:
+      containers:
+      - name: portfolio-manager
+        image: jaimehenao8126/trii-portfolio-manager:latest
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres-service:5432/trii_dev"
+        - name: MARKET_DATA_SERVICE_URL
+          value: "http://market-data-service:8001"
+        - name: PORT
+          value: "8003"
+        - name: NODE_ENV
+          value: "development"
+        - name: DEBUG
+          value: "true"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 8003
+          name: http
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 5
+          periodSeconds: 5

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analysis-engine
+  namespace: trii-dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analysis-engine
+  template:
+    metadata:
+      labels:
+        app: analysis-engine
+        app.kubernetes.io/name: analysis-engine
+        app.kubernetes.io/component: service
+    spec:
+      containers:
+      - name: analysis-engine
+        image: jaimehenao8126/trii-analysis-engine:latest
+        env:
+        - name: MARKET_DATA_SERVICE_URL
+          value: "http://market-data-service:8001"
+        - name: DEBUG
+          value: "true"
+        ports:
+        - containerPort: 8002
+          name: http
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 5

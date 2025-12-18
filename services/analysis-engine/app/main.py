@@ -1,16 +1,12 @@
-"""Main FastAPI application."""
+"""Main FastAPI application for Analysis Engine."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
-from contextlib import asynccontextmanager
+import structlog
 
 from app.core.config import settings
-from app.api import quotes
-from app.db.redis import close_redis
-from app.db.session import engine, Base
-from app.models.quote import Quote, HistoricalPrice
-import structlog
+from app.api import indicators
 
 # Configure structured logging
 structlog.configure(
@@ -33,33 +29,14 @@ structlog.configure(
 logger = structlog.get_logger()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan events."""
-    # Startup
-    logger.info("Starting TRII Market Data Service", version=settings.APP_VERSION)
-
-    # Create database tables
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database tables created successfully")
-    except Exception as e:
-        logger.error("Failed to create database tables", error=str(e))
-        raise
-
-    yield
-    # Shutdown
-    logger.info("Shutting down TRII Market Data Service")
-    await close_redis()
-
-
 # Create FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Market data ingestion and distribution service for TRII Investment Platform",
-    lifespan=lifespan
+    description="Technical analysis and indicator calculation service for TRII Investment Platform",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json"
 )
 
 # CORS middleware
@@ -72,16 +49,40 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(quotes.router, prefix=f"{settings.API_V1_PREFIX}/market-data", tags=["quotes"])
+app.include_router(
+    indicators.router,
+    prefix=f"{settings.API_V1_PREFIX}/indicators",
+    tags=["Technical Indicators"]
+)
 
 # Prometheus metrics
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Application startup event."""
+    logger.info(
+        "Starting Analysis Engine Service",
+        version=settings.APP_VERSION,
+        market_data_url=settings.MARKET_DATA_SERVICE_URL
+    )
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Application shutdown event."""
+    logger.info("Shutting down Analysis Engine Service")
+
+
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
+    """
+    Health check endpoint.
+
+    Returns service status and version information.
+    """
     return {
         "status": "healthy",
         "service": settings.APP_NAME,
@@ -91,12 +92,28 @@ async def health_check():
 
 @app.get("/")
 async def root():
-    """Root endpoint."""
+    """
+    Root endpoint.
+
+    Returns basic service information and available endpoints.
+    """
     return {
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "docs": "/docs",
-        "health": "/health"
+        "description": "Technical Analysis Engine - Calculate technical indicators for financial markets",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "metrics": "/metrics",
+            "api": settings.API_V1_PREFIX
+        },
+        "indicators": [
+            "SMA - Simple Moving Average",
+            "EMA - Exponential Moving Average",
+            "RSI - Relative Strength Index",
+            "MACD - Moving Average Convergence Divergence",
+            "Bollinger Bands"
+        ]
     }
 
 
@@ -105,6 +122,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8001,
+        port=8002,
         reload=settings.DEBUG
     )

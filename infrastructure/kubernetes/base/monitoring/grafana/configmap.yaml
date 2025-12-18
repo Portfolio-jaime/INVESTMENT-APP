@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  namespace: monitoring
+data:
+  grafana.ini: |
+    [server]
+    http_port = 3000
+    domain = grafana.trii-platform.com
+
+    [security]
+    admin_user = admin
+    admin_password = admin
+
+    [auth.anonymous]
+    enabled = true
+    org_role = Viewer
+
+    [log]
+    level = info
+
+    [database]
+    type = sqlite3
+    path = /var/lib/grafana/grafana.db
+
+    [paths]
+    data = /var/lib/grafana/data
+    logs = /var/lib/grafana/logs
+    plugins = /var/lib/grafana/plugins
+
+    [analytics]
+    reporting_enabled = false
+
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+      - name: 'TRII Platform'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
+
+  datasources.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.monitoring.svc.cluster.local:9090
+        isDefault: true
+        editable: true

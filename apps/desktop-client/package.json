@@ -1,0 +1,56 @@
+{
+  "name": "trii-desktop-client",
+  "version": "1.0.0",
+  "description": "TRII Investment Platform Desktop Client",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "start": "concurrently \"npm run build:renderer:watch\" \"npm run start:electron\"",
+    "start:electron": "wait-on dist/renderer/index.html && electron .",
+    "build": "npm run build:renderer && npm run build:main",
+    "build:main": "webpack --config webpack.main.config.js",
+    "build:renderer": "webpack --config webpack.renderer.config.js",
+    "build:renderer:watch": "webpack --config webpack.renderer.config.js --watch",
+    "package": "npm run build && electron-builder"
+  },
+  "keywords": ["investment", "portfolio", "electron"],
+  "author": "TRII",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "concurrently": "^8.2.2",
+    "css-loader": "^6.8.1",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "html-webpack-plugin": "^5.6.0",
+    "postcss": "^8.4.32",
+    "postcss-loader": "^7.3.4",
+    "style-loader": "^3.3.3",
+    "tailwindcss": "^3.4.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "wait-on": "^7.2.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.10.3"
+  },
+  "build": {
+    "appId": "com.trii.desktop",
+    "productName": "TRII Investment Platform",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.finance"
+    }
+  }
+}

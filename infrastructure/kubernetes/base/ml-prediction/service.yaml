@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-prediction-service
+  namespace: trii-dev
+  labels:
+    app: ml-prediction
+    app.kubernetes.io/name: ml-prediction
+    app.kubernetes.io/component: service
+spec:
+  selector:
+    app: ml-prediction
+  ports:
+  - name: http
+    port: 8004
+    targetPort: 8004
+    protocol: TCP
+  type: ClusterIP
