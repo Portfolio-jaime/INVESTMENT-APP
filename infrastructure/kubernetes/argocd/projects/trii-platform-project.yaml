@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: trii-platform
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: TRII Platform Investment Application Project
+  
+  # Permitir fuentes específicas
+  sourceRepos:
+  - 'https://github.com/Portfolio-jaime/INVESTMENT-APP.git'
+  - 'git@github-portfolio:Portfolio-jaime/INVESTMENT-APP.git'
+  - '*' # Para desarrollo local
+  
+  # Permitir destinos específicos
+  destinations:
+  - namespace: trii-dev
+    server: https://kubernetes.default.svc
+  - namespace: trii-staging
+    server: https://kubernetes.default.svc
+  - namespace: trii-prod
+    server: https://kubernetes.default.svc
+  - namespace: monitoring
+    server: https://kubernetes.default.svc
+  
+  # Roles del cluster permitidos
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  - group: 'rbac.authorization.k8s.io'
+    kind: ClusterRole
+  - group: 'rbac.authorization.k8s.io'
+    kind: ClusterRoleBinding
+  - group: 'apiextensions.k8s.io'
+    kind: CustomResourceDefinition
+  - group: 'admissionregistration.k8s.io'
+    kind: MutatingWebhookConfiguration
+  - group: 'admissionregistration.k8s.io'
+    kind: ValidatingWebhookConfiguration
+  - group: 'networking.k8s.io'
+    kind: IngressClass
+  
+  # Recursos del namespace permitidos
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: '*'
+  - group: 'apps'
+    kind: '*'
+  - group: 'extensions'
+    kind: '*'
+  - group: 'networking.k8s.io'
+    kind: '*'
+  - group: 'batch'
+    kind: '*'
+  - group: 'autoscaling'
+    kind: '*'
+  - group: 'policy'
+    kind: '*'
+  - group: 'metrics.k8s.io'
+    kind: '*'
+  - group: 'monitoring.coreos.com'
+    kind: '*'
+  
+  # Permitir acciones de sync
+  syncWindows:
+  - kind: allow
+    schedule: '* * * * *'
+    duration: 24h
+    applications:
+    - '*'
+    manualSync: true
+  
+  # Roles para usuarios
+  roles:
+  - name: admin
+    description: Admin access to trii-platform project
+    policies:
+    - p, proj:trii-platform:admin, applications, *, trii-platform/*, allow
+    - p, proj:trii-platform:admin, repositories, *, *, allow
+    - p, proj:trii-platform:admin, clusters, *, *, allow
+    groups:
+    - argocd-admin
+  
+  - name: developer
+    description: Developer access to trii-platform project
+    policies:
+    - p, proj:trii-platform:developer, applications, get, trii-platform/*, allow
+    - p, proj:trii-platform:developer, applications, sync, trii-platform/*, allow
+    - p, proj:trii-platform:developer, applications, create, trii-platform/*, allow
+    groups:
+    - trii-developers

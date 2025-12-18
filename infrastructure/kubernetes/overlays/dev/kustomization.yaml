@@ -3,34 +3,10 @@ kind: Kustomization
 
 namespace: trii-dev
 
-bases:
+resources:
   - ../../base
 
-patchesStrategicMerge:
-  - replicas-patch.yaml
-
-commonLabels:
-  environment: development
-
-configMapGenerator:
-  - name: app-config
-    behavior: merge
-    literals:
-      - LOG_LEVEL=debug
-      - ENVIRONMENT=development
-
-secretGenerator:
-  - name: app-secrets
-    behavior: merge
-    literals:
-      - POSTGRES_PASSWORD=trii_dev_password
-      - REDIS_PASSWORD=trii_dev_password
-      - RABBITMQ_PASSWORD=trii_dev_password
-      - MINIO_ACCESS_KEY=triiadmin
-      - MINIO_SECRET_KEY=triiadmin123
-      - ALPHA_VANTAGE_API_KEY=DMRJBMVCSWVOKFMO
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-
-replicas:
-  - name: market-data
-    count: 1
+labels:
+  - includeSelectors: true
+    pairs:
+      environment: development

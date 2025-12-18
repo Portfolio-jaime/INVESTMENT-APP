@@ -11,6 +11,7 @@ spec:
   selector:
     matchLabels:
       app: postgres
+      app.kubernetes.io/component: database
   template:
     metadata:
       labels:

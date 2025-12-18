@@ -10,13 +10,10 @@ metadata:
 spec:
   project: trii-platform
   source:
-    repoURL: https://github.com/trii-platform/investment-app
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
-    path: infrastructure/kubernetes
-    kustomize:
-      commonLabels:
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: trii-platform
+    path: infrastructure/kubernetes/overlays/dev
+    kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: trii-dev
@@ -102,5 +99,5 @@ spec:
     namespace: trii-prod
   syncPolicy:
     # Manual sync for production
-    automated: null
+    automated: {}
   revisionHistoryLimit: 10

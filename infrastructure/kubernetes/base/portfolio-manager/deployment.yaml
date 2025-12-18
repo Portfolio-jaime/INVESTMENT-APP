@@ -21,8 +21,19 @@ spec:
       - name: portfolio-manager
         image: jaimehenao8126/trii-portfolio-manager:latest
         env:
-        - name: DATABASE_URL
-          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres-service:5432/trii_dev"
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: POSTGRES_PASSWORD
+        - name: DB_NAME
+          value: "trii_dev"
         - name: MARKET_DATA_SERVICE_URL
           value: "http://market-data-service:8001"
         - name: PORT
@@ -31,11 +42,6 @@ spec:
           value: "development"
         - name: DEBUG
           value: "true"
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: POSTGRES_PASSWORD
         ports:
         - containerPort: 8003
           name: http

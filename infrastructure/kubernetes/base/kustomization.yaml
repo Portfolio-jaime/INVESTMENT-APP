@@ -25,6 +25,7 @@ resources:
   - portfolio-manager/service.yaml
   - ml-prediction/deployment.yaml
   - ml-prediction/service.yaml
+  - ingress/trii-platform-ingress.yaml
 
 commonLabels:
   app.kubernetes.io/name: trii-platform
