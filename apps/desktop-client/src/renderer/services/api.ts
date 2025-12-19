@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const MARKET_DATA_API = 'http://localhost:8001';
+const MARKET_DATA_API = 'http://localhost:8001/api/v1/market-data';
 const PORTFOLIO_API = 'http://localhost:8003';
 
 // Market Data Service APIs
@@ -10,13 +10,15 @@ export const getQuote = async (symbol: string) => {
 };
 
 export const getQuotes = async (symbols: string[]) => {
-  const response = await axios.post(`${MARKET_DATA_API}/quotes/batch`, { symbols });
-  return response.data;
+  // For now, fetch quotes individually since batch endpoint doesn't exist
+  const promises = symbols.map(symbol => getQuote(symbol));
+  const results = await Promise.all(promises);
+  return results;
 };
 
 export const getHistoricalData = async (symbol: string, period: string = '1mo') => {
-  const response = await axios.get(`${MARKET_DATA_API}/historical/${symbol}`, {
-    params: { period }
+  const response = await axios.get(`${MARKET_DATA_API}/quotes/${symbol}/historical`, {
+    params: { timeframe: period === '1mo' ? 'daily' : period, limit: 100 }
   });
   return response.data;
 };
