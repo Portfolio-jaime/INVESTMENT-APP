@@ -7,7 +7,9 @@ data:
   grafana.ini: |
     [server]
     http_port = 3000
-    domain = grafana.trii-platform.com
+    domain = grafana.trii-platform.local
+    serve_from_sub_path = false
+    root_url = %(protocol)s://%(domain)s:%(http_port)s/
 
     [security]
     admin_user = admin

@@ -6,6 +6,7 @@ namespace: trii-dev
 resources:
   - namespace.yaml
   - secrets.yaml
+  - ingress/trii-platform-ingress.yaml
   - postgres/configmap.yaml
   - postgres/service.yaml
   - postgres/statefulset.yaml
