@@ -10,7 +10,7 @@ metadata:
 spec:
   project: trii-platform
   source:
-    repoURL: https://github.com/trii-platform/investment-app
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/kubernetes/base/monitoring
     kustomize:

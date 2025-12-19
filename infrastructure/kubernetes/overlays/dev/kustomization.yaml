@@ -6,7 +6,5 @@ namespace: trii-dev
 resources:
   - ../../base
 
-labels:
-  - includeSelectors: false
-    pairs:
-      environment: development
+commonLabels:
+  environment: development

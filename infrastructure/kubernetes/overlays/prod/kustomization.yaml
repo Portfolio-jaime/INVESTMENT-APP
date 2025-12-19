@@ -1,0 +1,66 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: trii-production
+
+# Base resources
+resources:
+  - ../../base
+
+# Namespace
+namespace: trii-prod
+
+# Common labels for production
+commonLabels:
+  environment: production
+  app.kubernetes.io/instance: trii-prod
+
+# Common annotations
+commonAnnotations:
+  app.kubernetes.io/managed-by: argocd
+  environment: production
+
+# Resource patches
+patches:
+  - path: replicas-patch.yaml
+    target:
+      kind: Deployment
+  - path: resources-patch.yaml
+    target:
+      kind: Deployment
+  - path: hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+
+# Image tags (use specific release tags for production)
+images:
+  - name: trii-portfolio-manager
+    newTag: v1.0.0
+  - name: trii-analysis-engine
+    newTag: v1.0.0
+  - name: trii-market-data
+    newTag: v1.0.0
+  - name: trii-ml-prediction
+    newTag: v1.0.0
+  - name: trii-risk-assessment
+    newTag: v1.0.0
+
+# ConfigMap generator for production config
+configMapGenerator:
+  - name: trii-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=warn
+      - METRICS_ENABLED=true
+      - DEBUG_MODE=false
+      - PERFORMANCE_MONITORING=true
+
+# Secret generator for production secrets
+secretGenerator:
+  - name: trii-secrets
+    behavior: merge
+    literals:
+      - DATABASE_ENCRYPTION=enabled
+      - BACKUP_RETENTION=30d

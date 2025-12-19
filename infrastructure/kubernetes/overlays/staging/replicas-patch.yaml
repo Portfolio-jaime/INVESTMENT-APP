@@ -1,0 +1,4 @@
+# Kustomize patches for staging replicas
+- op: replace
+  path: /spec/replicas
+  value: 2

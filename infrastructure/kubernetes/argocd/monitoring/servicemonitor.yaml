@@ -1,0 +1,170 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-metrics
+    app.kubernetes.io/part-of: argocd
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-metrics
+  endpoints:
+    - port: metrics
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-server-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-server-metrics
+    app.kubernetes.io/part-of: argocd
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server-metrics
+  endpoints:
+    - port: metrics
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-repo-server-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-repo-server-metrics
+    app.kubernetes.io/part-of: argocd
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  endpoints:
+    - port: metrics
+
+---
+# Grafana Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  argocd-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "ArgoCD Dashboard",
+        "tags": ["argocd", "gitops"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "title": "Applications Status",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "argocd_app_info",
+                "legendFormat": "{{name}} - {{health_status}}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "mappings": [],
+                "thresholds": {
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "red", "value": 80}
+                  ]
+                }
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "title": "Sync Status",
+            "type": "stat", 
+            "targets": [
+              {
+                "expr": "argocd_app_sync_total",
+                "legendFormat": "Sync Events"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "title": "Repository Operations",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(argocd_git_request_total[5m])",
+                "legendFormat": "Git Requests/sec"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
+
+---
+# PrometheusRule for ArgoCD alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-alerts
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-alerts
+    app.kubernetes.io/part-of: argocd
+spec:
+  groups:
+    - name: argocd.rules
+      rules:
+        - alert: ArgoCDAppHealthDegraded
+          expr: argocd_app_health_status{health_status!="Healthy"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD Application {{ $labels.name }} health is degraded"
+            description: "Application {{ $labels.name }} in project {{ $labels.project }} has been in {{ $labels.health_status }} state for more than 15 minutes."
+
+        - alert: ArgoCDAppSyncFailed
+          expr: argocd_app_sync_total{phase="Failed"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ArgoCD Application {{ $labels.name }} sync failed"
+            description: "Application {{ $labels.name }} sync has failed. Check the application logs for details."
+
+        - alert: ArgoCDServerDown
+          expr: up{job="argocd-server-metrics"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ArgoCD Server is down"
+            description: "ArgoCD Server has been down for more than 5 minutes."
+
+        - alert: ArgoCDRepoServerDown
+          expr: up{job="argocd-repo-server-metrics"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ArgoCD Repository Server is down"
+            description: "ArgoCD Repository Server has been down for more than 5 minutes."

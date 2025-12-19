@@ -59,22 +59,25 @@ CURRENT_CONTEXT=$(kubectl config current-context 2>/dev/null || echo "none")
 print_info "Contextos disponibles:"
 echo ""
 
-# Mostrar lista numerada de contextos
+# Crear array de contextos
 CONTEXT_ARRAY=()
-INDEX=1
+while IFS= read -r context; do
+    CONTEXT_ARRAY+=("$context")
+done <<< "$CONTEXTS"
 
-echo "$CONTEXTS" | while read -r context; do
+# Mostrar lista numerada de contextos
+INDEX=1
+for context in "${CONTEXT_ARRAY[@]}"; do
     if [ "$context" = "$CURRENT_CONTEXT" ]; then
         echo -e "${GREEN}  $INDEX) $context (ACTUAL)${NC}"
     else
         echo "  $INDEX) $context"
     fi
-    CONTEXT_ARRAY+=("$context")
     ((INDEX++))
 done
 
 echo ""
-read -p "Selecciona el número del contexto al que deseas conectarte (1-$((${#CONTEXT_ARRAY[@]}+1))): " selection
+read -p "Selecciona el número del contexto al que deseas conectarte (1-${#CONTEXT_ARRAY[@]}): " selection
 
 # Validar entrada
 if ! [[ "$selection" =~ ^[0-9]+$ ]] || [ "$selection" -lt 1 ] || [ "$selection" -gt "${#CONTEXT_ARRAY[@]}" ]; then

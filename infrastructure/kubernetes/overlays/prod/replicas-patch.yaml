@@ -1,0 +1,4 @@
+# Production replicas - higher for availability
+- op: replace
+  path: /spec/replicas
+  value: 3

@@ -47,7 +47,7 @@ metadata:
 spec:
   project: trii-platform
   source:
-    repoURL: https://github.com/trii-platform/investment-app
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/kubernetes/overlays/staging
     kustomize:
@@ -87,7 +87,7 @@ metadata:
 spec:
   project: trii-platform
   source:
-    repoURL: https://github.com/trii-platform/investment-app
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: tags/v1.0.0
     path: infrastructure/kubernetes/overlays/prod
     kustomize:

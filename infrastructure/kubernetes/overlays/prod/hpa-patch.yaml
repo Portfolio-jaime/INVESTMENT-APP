@@ -1,0 +1,10 @@
+# HPA configuration for production auto-scaling
+- op: replace
+  path: /spec/minReplicas
+  value: 3
+- op: replace
+  path: /spec/maxReplicas
+  value: 10
+- op: replace
+  path: /spec/targetCPUUtilizationPercentage
+  value: 70

@@ -116,56 +116,15 @@ data:
   #       - name: trii-platform
 
 ---
-# Secret for GitHub credentials (if needed)
-apiVersion: v1
-kind: Secret
-metadata:
-  name: github-creds
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: repo-creds
-type: Opaque
-data:
-  # Base64 encoded username and password/token
-  username: Z2l0aHViLXVzZXJuYW1l  # github-username (base64)
-  password: Z2l0aHViLXRva2Vu      # github-token (base64)
-
----
-# Application projects
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: trii-platform
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  description: TRII Investment Platform applications
-  sourceRepos:
-    - '*'
-  destinations:
-    - namespace: trii-dev
-      server: https://kubernetes.default.svc
-    - namespace: trii-staging
-      server: https://kubernetes.default.svc
-    - namespace: trii-prod
-      server: https://kubernetes.default.svc
-    - namespace: monitoring
-      server: https://kubernetes.default.svc
-  clusterResourceWhitelist:
-    - group: '*'
-      kind: '*'
-  namespaceResourceWhitelist:
-    - group: '*'
-      kind: '*'
-  orphanedResources:
-    warn: false
-  roles:
-    - name: developer
-      description: Developer role for trii-platform
-      policies:
-        - p, proj:trii-platform:developer, applications, get, trii-platform/*, allow
-        - p, proj:trii-platform:developer, applications, sync, trii-platform/*, allow
-        - p, proj:trii-platform:developer, applications, update, trii-platform/*, allow
-      groups:
-        - argocd-developer
+# Secret template for GitHub credentials (replace with actual values)
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: github-creds
+#   namespace: argocd
+#   labels:
+#     argocd.argoproj.io/secret-type: repo-creds
+# type: Opaque
+# stringData:
+#   username: your-github-username
+#   password: your-github-token
