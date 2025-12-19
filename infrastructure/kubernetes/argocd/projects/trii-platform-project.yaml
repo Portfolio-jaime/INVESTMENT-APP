@@ -60,8 +60,6 @@ spec:
     kind: '*'
   - group: 'metrics.k8s.io'
     kind: '*'
-  - group: 'monitoring.coreos.com'
-    kind: '*'
   
   # Permitir acciones de sync
   syncWindows:
