@@ -45,7 +45,7 @@ class TechnicalIndicatorService:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
                     f"{self.market_data_url}/api/v1/market-data/quotes/{symbol}/historical",
-                    params={"days": days}
+                    params={"timeframe": "daily", "limit": days}
                 )
                 response.raise_for_status()
                 data = response.json()
@@ -55,7 +55,7 @@ class TechnicalIndicatorService:
 
             # Convert to DataFrame
             df = pd.DataFrame(data)
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df['timestamp'] = pd.to_datetime(df['date'])
             df = df.sort_values('timestamp')
             df = df.set_index('timestamp')
 

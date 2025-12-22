@@ -35,7 +35,9 @@ class AlphaVantageClient:
             response = await self.client.get(self.BASE_URL, params=params)
             response.raise_for_status()
             data = response.json()
-            
+
+            logger.debug("Alpha Vantage response", symbol=symbol, data=data)
+
             if "Global Quote" not in data or not data["Global Quote"]:
                 logger.warning("No quote data found", symbol=symbol)
                 return None
@@ -86,7 +88,9 @@ class AlphaVantageClient:
             response = await self.client.get(self.BASE_URL, params=params)
             response.raise_for_status()
             data = response.json()
-            
+
+            logger.debug("Alpha Vantage historical response", symbol=symbol, timeframe=timeframe, data=data)
+
             time_series_key = f"Time Series ({timeframe.capitalize()})"
             if time_series_key not in data:
                 logger.warning("No historical data found", symbol=symbol)

@@ -30,9 +30,20 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
     
     # Redis
-    REDIS_URL: str = "redis://redis:6379/0"
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: str = "6379"
+    REDIS_DB: str = "0"
+    REDIS_PASSWORD: str = ""
     REDIS_MAX_CONNECTIONS: int = 50
     REDIS_CACHE_TTL: int = 300  # 5 minutes
+
+    @property
+    def REDIS_URL(self) -> str:
+        """Construct Redis URL from components."""
+        if self.REDIS_PASSWORD:
+            return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        else:
+            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
     
     # External APIs
     ALPHA_VANTAGE_API_KEY: str = "demo"
