@@ -24,5 +24,7 @@ resources:
   - portfolio-manager/deployment.yaml
   - ml-prediction/service.yaml
   - ml-prediction/deployment.yaml
+  - desktop-client/service.yaml
+  - desktop-client/deployment.yaml
 
 images: []

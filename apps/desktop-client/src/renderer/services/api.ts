@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const MARKET_DATA_API = 'http://localhost:8001/api/v1/market-data';
-const PORTFOLIO_API = 'http://localhost:8003';
+const MARKET_DATA_API = '/api/market-data/api/v1/market-data';
+const PORTFOLIO_API = '/api/portfolio-manager/api/v1/portfolios';
 
 // Market Data Service APIs
 export const getQuote = async (symbol: string) => {

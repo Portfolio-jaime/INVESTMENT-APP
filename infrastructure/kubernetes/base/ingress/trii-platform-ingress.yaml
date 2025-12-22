@@ -165,6 +165,7 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/rewrite-target: /api/v1
 spec:
   ingressClassName: nginx
   rules:
@@ -205,26 +206,6 @@ spec:
             name: ml-prediction-service
             port:
               number: 8004
-
----
-# Service for desktop client (if not exists)
-apiVersion: v1
-kind: Service
-metadata:
-  name: desktop-client-service
-  namespace: trii-dev
-  labels:
-    app.kubernetes.io/name: desktop-client
-    app.kubernetes.io/component: frontend
-spec:
-  type: ClusterIP
-  ports:
-  - port: 3000
-    targetPort: 3000
-    protocol: TCP
-    name: http
-  selector:
-    app.kubernetes.io/name: desktop-client
 
 ---
 # NodePort services for local development access
