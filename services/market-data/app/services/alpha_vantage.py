@@ -1,10 +1,13 @@
-"""Alpha Vantage API client."""
+"""Market Data API client with multiple providers."""
 
 import httpx
 from typing import Dict, List, Optional
 from datetime import datetime
 from app.core.config import settings
 from app.schemas.quote import QuoteBase, HistoricalPriceBase, QuoteSearchResponse
+from app.services.yahoo_finance import yahoo_finance_client
+from app.services.twelve_data import twelve_data_client
+from app.services.finnhub import finnhub_client
 import structlog
 
 logger = structlog.get_logger()
@@ -12,17 +15,17 @@ logger = structlog.get_logger()
 
 class AlphaVantageClient:
     """Client for Alpha Vantage API."""
-    
+
     BASE_URL = "https://www.alphavantage.co/query"
-    
+
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or settings.ALPHA_VANTAGE_API_KEY
         self.client = httpx.AsyncClient(timeout=30.0)
-    
+
     async def close(self):
         """Close HTTP client."""
         await self.client.aclose()
-    
+
     async def get_quote(self, symbol: str) -> Optional[QuoteBase]:
         """Get real-time quote for a symbol."""
         try:
@@ -31,7 +34,7 @@ class AlphaVantageClient:
                 "symbol": symbol,
                 "apikey": self.api_key
             }
-            
+
             response = await self.client.get(self.BASE_URL, params=params)
             response.raise_for_status()
             data = response.json()
@@ -41,9 +44,9 @@ class AlphaVantageClient:
             if "Global Quote" not in data or not data["Global Quote"]:
                 logger.warning("No quote data found", symbol=symbol)
                 return None
-            
+
             quote_data = data["Global Quote"]
-            
+
             return QuoteBase(
                 symbol=quote_data.get("01. symbol", symbol),
                 exchange="US",  # Alpha Vantage primarily US markets
@@ -57,18 +60,19 @@ class AlphaVantageClient:
                 volume=int(quote_data.get("06. volume", 0)),
                 timestamp=datetime.now()
             )
-            
+
         except httpx.HTTPError as e:
             logger.error("HTTP error fetching quote", symbol=symbol, error=str(e))
             return None
         except Exception as e:
             logger.error("Error fetching quote", symbol=symbol, error=str(e))
             return None
-    
+
     async def get_historical_data(
-        self, 
-        symbol: str, 
-        timeframe: str = "daily"
+        self,
+        symbol: str,
+        timeframe: str = "daily",
+        limit: int = 100
     ) -> List[HistoricalPriceBase]:
         """Get historical price data."""
         try:
@@ -77,14 +81,14 @@ class AlphaVantageClient:
                 "weekly": "TIME_SERIES_WEEKLY",
                 "monthly": "TIME_SERIES_MONTHLY",
             }
-            
+
             params = {
                 "function": function_map.get(timeframe, "TIME_SERIES_DAILY"),
                 "symbol": symbol,
                 "outputsize": "full",
                 "apikey": self.api_key
             }
-            
+
             response = await self.client.get(self.BASE_URL, params=params)
             response.raise_for_status()
             data = response.json()
@@ -95,10 +99,10 @@ class AlphaVantageClient:
             if time_series_key not in data:
                 logger.warning("No historical data found", symbol=symbol)
                 return []
-            
+
             time_series = data[time_series_key]
             historical_data = []
-            
+
             for date_str, values in time_series.items():
                 historical_data.append(HistoricalPriceBase(
                     symbol=symbol,
@@ -111,13 +115,13 @@ class AlphaVantageClient:
                     timeframe=timeframe[0] + "d" if timeframe == "daily" else timeframe,
                     date=datetime.strptime(date_str, "%Y-%m-%d")
                 ))
-            
-            return historical_data
-            
+
+            return historical_data[:limit]
+
         except Exception as e:
             logger.error("Error fetching historical data", symbol=symbol, error=str(e))
             return []
-    
+
     async def search_symbols(self, query: str) -> List[QuoteSearchResponse]:
         """Search for symbols."""
         try:
@@ -126,14 +130,14 @@ class AlphaVantageClient:
                 "keywords": query,
                 "apikey": self.api_key
             }
-            
+
             response = await self.client.get(self.BASE_URL, params=params)
             response.raise_for_status()
             data = response.json()
-            
+
             if "bestMatches" not in data:
                 return []
-            
+
             results = []
             for match in data["bestMatches"]:
                 results.append(QuoteSearchResponse(
@@ -144,9 +148,62 @@ class AlphaVantageClient:
                     currency=match.get("8. currency", "USD"),
                     country=match.get("4. region", "")
                 ))
-            
+
             return results
-            
+
         except Exception as e:
             logger.error("Error searching symbols", query=query, error=str(e))
             return []
+
+
+class MarketDataClient:
+    """Client for market data with multiple providers and fallback."""
+
+    def __init__(self):
+        self.providers = [
+            ("Yahoo Finance", yahoo_finance_client),
+            ("Twelve Data", twelve_data_client),
+            ("Finnhub", finnhub_client),
+            ("Alpha Vantage", AlphaVantageClient()),
+        ]
+
+    async def get_quote(self, symbol: str) -> Optional[QuoteBase]:
+        """Get real-time quote for a symbol with fallback providers."""
+        for provider_name, provider in self.providers:
+            try:
+                logger.info("Trying to get quote from provider", symbol=symbol, provider=provider_name)
+                result = await provider.get_quote(symbol)
+                if result:
+                    logger.info("Successfully got quote from provider", symbol=symbol, provider=provider_name)
+                    return result
+                else:
+                    logger.warning("Provider returned no data", symbol=symbol, provider=provider_name)
+            except Exception as e:
+                logger.error("Error with provider", symbol=symbol, provider=provider_name, error=str(e))
+                continue
+
+        logger.error("All providers failed to get quote", symbol=symbol)
+        return None
+
+    async def get_historical_data(
+        self,
+        symbol: str,
+        timeframe: str = "daily",
+        limit: int = 100
+    ) -> List[HistoricalPriceBase]:
+        """Get historical price data with fallback providers."""
+        for provider_name, provider in self.providers:
+            try:
+                logger.info("Trying to get historical data from provider", symbol=symbol, provider=provider_name, timeframe=timeframe, limit=limit)
+                result = await provider.get_historical_data(symbol, timeframe, limit)
+                if result:
+                    logger.info("Successfully got historical data from provider", symbol=symbol, provider=provider_name, records=len(result))
+                    return result
+                else:
+                    logger.warning("Provider returned no historical data", symbol=symbol, provider=provider_name)
+            except Exception as e:
+                logger.error("Error with provider", symbol=symbol, provider=provider_name, error=str(e))
+                continue
+
+        logger.error("All providers failed to get historical data", symbol=symbol)
+        return []

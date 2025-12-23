@@ -45,6 +45,16 @@ spec:
             secretKeyRef:
               name: app-secrets
               key: ALPHA_VANTAGE_API_KEY
+        - name: TWELVE_DATA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: TWELVE_DATA_API_KEY
+        - name: FINNHUB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: FINNHUB_API_KEY
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:

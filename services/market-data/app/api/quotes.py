@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from app.db.session import get_db
 from app.schemas.quote import QuoteResponse, HistoricalPriceResponse, QuoteSearchResponse
-from app.services.alpha_vantage import AlphaVantageClient
+from app.services.alpha_vantage import MarketDataClient, AlphaVantageClient
 from app.services.cache_service import cache_service
 from app.models.quote import Quote, HistoricalPrice
 from sqlalchemy import select, and_
@@ -31,44 +31,40 @@ async def get_quote(
         logger.info("Quote cache hit", symbol=symbol)
         return cached_quote
     
-    # Fetch from Alpha Vantage
-    client = AlphaVantageClient()
-    try:
-        quote_data = await client.get_quote(symbol)
-        if not quote_data:
-            raise HTTPException(status_code=404, detail=f"Quote not found for symbol: {symbol}")
-        
-        # Save to database
-        quote = Quote(**quote_data.dict())
-        db.add(quote)
-        await db.commit()
-        await db.refresh(quote)
-        
-        # Cache the result
-        quote_dict = {
-            "id": quote.id,
-            "symbol": quote.symbol,
-            "exchange": quote.exchange,
-            "price": quote.price,
-            "open_price": quote.open_price,
-            "high": quote.high,
-            "low": quote.low,
-            "previous_close": quote.previous_close,
-            "change": quote.change,
-            "change_percent": quote.change_percent,
-            "volume": quote.volume,
-            "avg_volume": quote.avg_volume,
-            "market_cap": quote.market_cap,
-            "shares_outstanding": quote.shares_outstanding,
-            "timestamp": quote.timestamp.isoformat(),
-            "created_at": quote.created_at.isoformat()
-        }
-        await cache_service.set_quote(symbol, quote_dict, ttl=60)
-        
-        return quote
-        
-    finally:
-        await client.close()
+    # Fetch from market data providers
+    client = MarketDataClient()
+    quote_data = await client.get_quote(symbol)
+    if not quote_data:
+        raise HTTPException(status_code=404, detail=f"Quote not found for symbol: {symbol}")
+
+    # Save to database
+    quote = Quote(**quote_data.dict())
+    db.add(quote)
+    await db.commit()
+    await db.refresh(quote)
+
+    # Cache the result
+    quote_dict = {
+        "id": quote.id,
+        "symbol": quote.symbol,
+        "exchange": quote.exchange,
+        "price": quote.price,
+        "open_price": quote.open_price,
+        "high": quote.high,
+        "low": quote.low,
+        "previous_close": quote.previous_close,
+        "change": quote.change,
+        "change_percent": quote.change_percent,
+        "volume": quote.volume,
+        "avg_volume": quote.avg_volume,
+        "market_cap": quote.market_cap,
+        "shares_outstanding": quote.shares_outstanding,
+        "timestamp": quote.timestamp.isoformat(),
+        "created_at": quote.created_at.isoformat()
+    }
+    await cache_service.set_quote(symbol, quote_dict, ttl=60)
+
+    return quote
 
 
 @router.get("/quotes/{symbol}/historical", response_model=List[HistoricalPriceResponse])
@@ -102,41 +98,37 @@ async def get_historical_data(
         logger.info("Historical data from database", symbol=symbol, count=len(db_data))
         return list(db_data)
     
-    # Fetch from Alpha Vantage
-    client = AlphaVantageClient()
-    try:
-        historical_data = await client.get_historical_data(symbol, timeframe)
-        if not historical_data:
-            raise HTTPException(status_code=404, detail=f"No historical data found for {symbol}")
-        
-        # Save to database
-        for price_data in historical_data:
-            price = HistoricalPrice(**price_data.dict())
-            db.add(price)
-        
-        await db.commit()
-        
-        # Cache the result
-        historical_dict = [
-            {
-                "symbol": p.symbol,
-                "exchange": p.exchange,
-                "open": p.open,
-                "high": p.high,
-                "low": p.low,
-                "close": p.close,
-                "volume": p.volume,
-                "adjusted_close": p.adjusted_close,
-                "timeframe": p.timeframe,
-                "date": p.date.isoformat()
-            } for p in historical_data[:limit]
-        ]
-        await cache_service.set_historical(symbol, timeframe, historical_dict, ttl=3600)
-        
-        return historical_data[:limit]
-        
-    finally:
-        await client.close()
+    # Fetch from market data providers
+    client = MarketDataClient()
+    historical_data = await client.get_historical_data(symbol, timeframe, limit)
+    if not historical_data:
+        raise HTTPException(status_code=404, detail=f"No historical data found for {symbol}")
+
+    # Save to database
+    for price_data in historical_data:
+        price = HistoricalPrice(**price_data.dict())
+        db.add(price)
+
+    await db.commit()
+
+    # Cache the result
+    historical_dict = [
+        {
+            "symbol": p.symbol,
+            "exchange": p.exchange,
+            "open": p.open,
+            "high": p.high,
+            "low": p.low,
+            "close": p.close,
+            "volume": p.volume,
+            "adjusted_close": p.adjusted_close,
+            "timeframe": p.timeframe,
+            "date": p.date.isoformat()
+        } for p in historical_data[:limit]
+    ]
+    await cache_service.set_historical(symbol, timeframe, historical_dict, ttl=3600)
+
+    return historical_data[:limit]
 
 
 @router.get("/search", response_model=List[QuoteSearchResponse])
