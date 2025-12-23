@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { getPortfolios, getPositions, Portfolio, Position } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const PortfolioView: React.FC = () => {
+interface PortfolioViewProps {
+  addNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
+}
+
+const PortfolioView: React.FC<PortfolioViewProps> = ({ addNotification }) => {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
   const [positions, setPositions] = useState<Position[]>([]);
