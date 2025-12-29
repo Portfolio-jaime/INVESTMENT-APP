@@ -21,10 +21,6 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/kubernetes/base/analysis-engine
-    kustomize:
-      commonLabels:
-        app.kubernetes.io/managed-by: argocd
-        deployment: analysis-engine
 
   destination:
     server: https://kubernetes.default.svc

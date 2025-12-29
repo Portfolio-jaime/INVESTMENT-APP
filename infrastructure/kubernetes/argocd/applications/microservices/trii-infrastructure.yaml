@@ -18,10 +18,6 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/kubernetes/base/infrastructure
-    kustomize:
-      commonLabels:
-        app.kubernetes.io/managed-by: argocd
-        deployment: infrastructure
 
   destination:
     server: https://kubernetes.default.svc

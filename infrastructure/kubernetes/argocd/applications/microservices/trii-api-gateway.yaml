@@ -21,10 +21,6 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/kubernetes/base/api-gateway
-    kustomize:
-      commonLabels:
-        app.kubernetes.io/managed-by: argocd
-        deployment: api-gateway
 
   destination:
     server: https://kubernetes.default.svc

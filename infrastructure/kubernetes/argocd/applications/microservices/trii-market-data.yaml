@@ -21,10 +21,6 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/kubernetes/base/market-data
-    kustomize:
-      commonLabels:
-        app.kubernetes.io/managed-by: argocd
-        deployment: market-data
 
   destination:
     server: https://kubernetes.default.svc

@@ -21,10 +21,6 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/kubernetes/base/portfolio-manager
-    kustomize:
-      commonLabels:
-        app.kubernetes.io/managed-by: argocd
-        deployment: portfolio-manager
 
   destination:
     server: https://kubernetes.default.svc
