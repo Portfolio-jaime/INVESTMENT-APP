@@ -4,23 +4,10 @@ kind: Kustomization
 namespace: trii-dev
 
 resources:
-  - ../namespace.yaml
-  - ../secrets.yaml
-  - ../postgres/configmap.yaml
-  - ../postgres/service.yaml
-  - ../postgres/statefulset.yaml
-  - ../redis/service.yaml
-  - ../redis/statefulset.yaml
-  - ../rabbitmq/service.yaml
-  - ../rabbitmq/statefulset.yaml
-  - ../minio/service.yaml
-  - ../minio/statefulset.yaml
-
-commonLabels:
-  app.kubernetes.io/part-of: trii-platform
-  app.kubernetes.io/managed-by: argocd
-  tier: infrastructure
-
-# Add sync wave annotation to ensure infrastructure deploys first
-commonAnnotations:
-  argocd.argoproj.io/sync-wave: "0"
+  - namespace.yaml
+  - secrets.yaml
+  - configmap.yaml
+  - ../postgres
+  - ../redis
+  - ../minio
+  - ../rabbitmq
