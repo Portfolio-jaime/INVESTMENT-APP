@@ -26,5 +26,9 @@ resources:
   - ml-prediction/deployment.yaml
   - desktop-client/service.yaml
   - desktop-client/deployment.yaml
+  - api-gateway/configmap.yaml
+  - api-gateway/deployment.yaml
+  - api-gateway/service.yaml
+  - api-gateway/ingress.yaml
 
 images: []

@@ -38,7 +38,7 @@ async def fetch_market_data(symbol: str, days: int = 60):
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(
-                f"{settings.MARKET_DATA_SERVICE_URL}/api/v1/market-data/{symbol}/historical",
+                f"{settings.MARKET_DATA_SERVICE_URL}/api/v1/market-data/quotes/{symbol}/historical",
                 params={"days": days}
             )
             response.raise_for_status()

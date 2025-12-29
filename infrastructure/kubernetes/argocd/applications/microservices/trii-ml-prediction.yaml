@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trii-ml-prediction
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: trii-ml-prediction
+    app.kubernetes.io/component: backend-service
+    app.kubernetes.io/part-of: trii-platform
+    tier: analysis-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    notifications.argoproj.io/subscribe.on-deployed.slack: trii-deployments
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: trii-alerts
+spec:
+  project: trii-platform
+
+  source:
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
+    targetRevision: HEAD
+    path: infrastructure/kubernetes/base/ml-prediction
+    kustomize:
+      commonLabels:
+        app.kubernetes.io/managed-by: argocd
+        deployment: ml-prediction
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trii-dev
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+  revisionHistoryLimit: 10

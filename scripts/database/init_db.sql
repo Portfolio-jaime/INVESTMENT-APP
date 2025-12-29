@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS portfolios (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     currency VARCHAR(3) DEFAULT 'USD',
+    cash_balance DOUBLE PRECISION DEFAULT 0 NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ
@@ -72,11 +73,12 @@ CREATE TABLE IF NOT EXISTS transactions (
     id BIGSERIAL PRIMARY KEY,
     portfolio_id BIGINT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
     symbol VARCHAR(20) NOT NULL,
-    transaction_type VARCHAR(10) NOT NULL CHECK (transaction_type IN ('BUY', 'SELL')),
+    transaction_type VARCHAR(10) NOT NULL CHECK (transaction_type IN ('BUY', 'SELL', 'DEPOSIT', 'WITHDRAWAL')),
     quantity DOUBLE PRECISION NOT NULL,
     price DOUBLE PRECISION NOT NULL,
     fees DOUBLE PRECISION DEFAULT 0,
     total DOUBLE PRECISION NOT NULL,
+    cash_flow DOUBLE PRECISION DEFAULT 0,
     notes TEXT,
     transaction_date TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()

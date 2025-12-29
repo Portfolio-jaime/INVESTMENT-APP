@@ -362,7 +362,7 @@ class PortfolioService {
   private async getLatestQuote(symbol: string): Promise<MarketQuote | undefined> {
     try {
       const response = await axios.get(
-        `${MARKET_DATA_SERVICE_URL}/api/v1/quotes/${symbol}`,
+        `${MARKET_DATA_SERVICE_URL}/api/v1/market-data/quotes/${symbol}`,
         { timeout: 5000 }
       );
 
