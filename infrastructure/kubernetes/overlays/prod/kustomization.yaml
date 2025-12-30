@@ -33,18 +33,16 @@ patches:
     target:
       kind: HorizontalPodAutoscaler
 
-# Image tags (use specific release tags for production)
+# Image tags (use specific release tags for production) - updated by CI/CD
 images:
-  - name: trii-portfolio-manager
-    newTag: v1.0.0
-  - name: trii-analysis-engine
-    newTag: v1.0.0
-  - name: trii-market-data
-    newTag: v1.0.0
-  - name: trii-ml-prediction
-    newTag: v1.0.0
-  - name: trii-risk-assessment
-    newTag: v1.0.0
+  - name: jaimehenao8126/trii-market-data
+    newTag: v1.0.0 # market-data
+  - name: jaimehenao8126/trii-analysis-engine
+    newTag: v1.0.0 # analysis-engine
+  - name: jaimehenao8126/trii-portfolio-manager
+    newTag: v1.0.0 # portfolio-manager
+  - name: jaimehenao8126/trii-ml-prediction
+    newTag: v1.0.0 # ml-prediction
 
 # ConfigMap generator for production config
 configMapGenerator:

@@ -30,18 +30,16 @@ patches:
     target:
       kind: Deployment
 
-# Image tags (use specific tags for staging)
+# Image tags (use specific tags for staging) - updated by CI/CD
 images:
-  - name: trii-portfolio-manager
-    newTag: staging-latest
-  - name: trii-analysis-engine
-    newTag: staging-latest
-  - name: trii-market-data
-    newTag: staging-latest
-  - name: trii-ml-prediction
-    newTag: staging-latest
-  - name: trii-risk-assessment
-    newTag: staging-latest
+  - name: jaimehenao8126/trii-market-data
+    newTag: latest # market-data
+  - name: jaimehenao8126/trii-analysis-engine
+    newTag: latest # analysis-engine
+  - name: jaimehenao8126/trii-portfolio-manager
+    newTag: latest # portfolio-manager
+  - name: jaimehenao8126/trii-ml-prediction
+    newTag: latest # ml-prediction
 
 # ConfigMap generator for staging config
 configMapGenerator:

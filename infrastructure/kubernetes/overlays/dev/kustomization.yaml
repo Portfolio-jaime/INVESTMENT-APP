@@ -8,3 +8,14 @@ resources:
 
 commonLabels:
   environment: development
+
+# Image tag management - updated by CI/CD
+images:
+  - name: jaimehenao8126/trii-market-data
+    newTag: latest # market-data
+  - name: jaimehenao8126/trii-analysis-engine
+    newTag: latest # analysis-engine
+  - name: jaimehenao8126/trii-portfolio-manager
+    newTag: latest # portfolio-manager
+  - name: jaimehenao8126/trii-ml-prediction
+    newTag: latest # ml-prediction

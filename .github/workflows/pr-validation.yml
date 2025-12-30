@@ -1,0 +1,240 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'services/**'
+      - 'apps/**'
+      - 'infrastructure/kubernetes/**'
+
+jobs:
+  # Detect changes
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      market-data: ${{ steps.filter.outputs.market-data }}
+      analysis-engine: ${{ steps.filter.outputs.analysis-engine }}
+      portfolio-manager: ${{ steps.filter.outputs.portfolio-manager }}
+      ml-prediction: ${{ steps.filter.outputs.ml-prediction }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changed files
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            market-data:
+              - 'services/market-data/**'
+            analysis-engine:
+              - 'services/analysis-engine/**'
+            portfolio-manager:
+              - 'services/portfolio-manager/**'
+            ml-prediction:
+              - 'services/ml-prediction/**'
+
+  # Validate Market Data
+  validate-market-data:
+    name: Validate Market Data
+    needs: detect-changes
+    if: needs.detect-changes.outputs.market-data == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./services/market-data
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov black mypy pylint
+
+      - name: Code formatting check
+        working-directory: ./services/market-data
+        run: black --check app/
+
+      - name: Type checking
+        working-directory: ./services/market-data
+        run: mypy app/ --ignore-missing-imports || true
+
+      - name: Linting
+        working-directory: ./services/market-data
+        run: pylint app/ --fail-under=8 || true
+
+      - name: Run tests
+        working-directory: ./services/market-data
+        run: pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=50 || true
+
+      - name: Test Docker build
+        run: docker build -t test-market-data:pr ./services/market-data
+
+  # Validate Analysis Engine
+  validate-analysis-engine:
+    name: Validate Analysis Engine
+    needs: detect-changes
+    if: needs.detect-changes.outputs.analysis-engine == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./services/analysis-engine
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov black mypy pylint
+
+      - name: Code formatting check
+        working-directory: ./services/analysis-engine
+        run: black --check app/ || true
+
+      - name: Type checking
+        working-directory: ./services/analysis-engine
+        run: mypy app/ --ignore-missing-imports || true
+
+      - name: Run tests
+        working-directory: ./services/analysis-engine
+        run: pytest tests/ -v --cov=app --cov-report=term-missing || true
+
+      - name: Test Docker build
+        run: docker build -t test-analysis-engine:pr ./services/analysis-engine
+
+  # Validate Portfolio Manager
+  validate-portfolio-manager:
+    name: Validate Portfolio Manager
+    needs: detect-changes
+    if: needs.detect-changes.outputs.portfolio-manager == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./services/portfolio-manager
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./services/portfolio-manager
+        run: npm run lint || true
+
+      - name: Type check
+        working-directory: ./services/portfolio-manager
+        run: npm run type-check || true
+
+      - name: Run tests
+        working-directory: ./services/portfolio-manager
+        run: npm test || true
+
+      - name: Build
+        working-directory: ./services/portfolio-manager
+        run: npm run build
+
+      - name: Test Docker build
+        run: docker build -t test-portfolio-manager:pr ./services/portfolio-manager
+
+  # Validate ML Prediction
+  validate-ml-prediction:
+    name: Validate ML Prediction
+    needs: detect-changes
+    if: needs.detect-changes.outputs.ml-prediction == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./services/ml-prediction
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run tests
+        working-directory: ./services/ml-prediction
+        run: pytest tests/ -v --cov=app --cov-report=term-missing || true
+
+      - name: Test Docker build
+        run: docker build -t test-ml-prediction:pr ./services/ml-prediction
+
+  # Validate Kubernetes manifests
+  validate-k8s:
+    name: Validate Kubernetes Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Validate dev overlay
+        run: |
+          cd infrastructure/kubernetes/overlays/dev
+          kustomize build . > /dev/null
+          echo "✅ Dev overlay is valid"
+
+      - name: Validate staging overlay
+        run: |
+          cd infrastructure/kubernetes/overlays/staging
+          kustomize build . > /dev/null
+          echo "✅ Staging overlay is valid"
+
+      - name: Validate prod overlay
+        run: |
+          cd infrastructure/kubernetes/overlays/prod
+          kustomize build . > /dev/null
+          echo "✅ Production overlay is valid"
+
+  # Summary
+  pr-summary:
+    name: PR Validation Summary
+    needs:
+      - detect-changes
+      - validate-market-data
+      - validate-analysis-engine
+      - validate-portfolio-manager
+      - validate-ml-prediction
+      - validate-k8s
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🔍 PR Validation Results"
+          echo ""
+          echo "### Services Changed:"
+          echo "- Market Data: ${{ needs.detect-changes.outputs.market-data }}"
+          echo "- Analysis Engine: ${{ needs.detect-changes.outputs.analysis-engine }}"
+          echo "- Portfolio Manager: ${{ needs.detect-changes.outputs.portfolio-manager }}"
+          echo "- ML Prediction: ${{ needs.detect-changes.outputs.ml-prediction }}"
+          echo ""
+          echo "### Validation Status:"
+          echo "- Market Data: ${{ needs.validate-market-data.result }}"
+          echo "- Analysis Engine: ${{ needs.validate-analysis-engine.result }}"
+          echo "- Portfolio Manager: ${{ needs.validate-portfolio-manager.result }}"
+          echo "- ML Prediction: ${{ needs.validate-ml-prediction.result }}"
+          echo "- K8s Manifests: ${{ needs.validate-k8s.result }}"

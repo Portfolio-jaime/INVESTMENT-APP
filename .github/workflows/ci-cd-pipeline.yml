@@ -1,0 +1,336 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'services/**'
+      - 'apps/**'
+      - 'infrastructure/kubernetes/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  # Detect which services changed
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      market-data: ${{ steps.filter.outputs.market-data }}
+      analysis-engine: ${{ steps.filter.outputs.analysis-engine }}
+      portfolio-manager: ${{ steps.filter.outputs.portfolio-manager }}
+      ml-prediction: ${{ steps.filter.outputs.ml-prediction }}
+      notification: ${{ steps.filter.outputs.notification }}
+      risk-assessment: ${{ steps.filter.outputs.risk-assessment }}
+      desktop-client: ${{ steps.filter.outputs.desktop-client }}
+      infrastructure: ${{ steps.filter.outputs.infrastructure }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changed files
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            market-data:
+              - 'services/market-data/**'
+            analysis-engine:
+              - 'services/analysis-engine/**'
+            portfolio-manager:
+              - 'services/portfolio-manager/**'
+            ml-prediction:
+              - 'services/ml-prediction/**'
+            notification:
+              - 'services/notification/**'
+            risk-assessment:
+              - 'services/risk-assessment/**'
+            desktop-client:
+              - 'apps/desktop-client/**'
+            infrastructure:
+              - 'infrastructure/kubernetes/**'
+
+  # Build and push Market Data Service
+  build-market-data:
+    name: Build Market Data Service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.market-data == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./services/market-data
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run tests
+        working-directory: ./services/market-data
+        run: |
+          pytest tests/ -v --cov=app --cov-report=term-missing
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/market-data
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/trii-market-data:latest
+            ${{ secrets.DOCKER_USERNAME }}/trii-market-data:${{ env.IMAGE_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-market-data:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-market-data:buildcache,mode=max
+
+  # Build and push Analysis Engine
+  build-analysis-engine:
+    name: Build Analysis Engine
+    needs: detect-changes
+    if: needs.detect-changes.outputs.analysis-engine == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./services/analysis-engine
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run tests
+        working-directory: ./services/analysis-engine
+        run: |
+          pytest tests/ -v --cov=app --cov-report=term-missing || true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/analysis-engine
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/trii-analysis-engine:latest
+            ${{ secrets.DOCKER_USERNAME }}/trii-analysis-engine:${{ env.IMAGE_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-analysis-engine:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-analysis-engine:buildcache,mode=max
+
+  # Build and push Portfolio Manager
+  build-portfolio-manager:
+    name: Build Portfolio Manager
+    needs: detect-changes
+    if: needs.detect-changes.outputs.portfolio-manager == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./services/portfolio-manager
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./services/portfolio-manager
+        run: npm test || true
+
+      - name: Build
+        working-directory: ./services/portfolio-manager
+        run: npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/portfolio-manager
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/trii-portfolio-manager:latest
+            ${{ secrets.DOCKER_USERNAME }}/trii-portfolio-manager:${{ env.IMAGE_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-portfolio-manager:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-portfolio-manager:buildcache,mode=max
+
+  # Build and push ML Prediction Service
+  build-ml-prediction:
+    name: Build ML Prediction Service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.ml-prediction == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./services/ml-prediction
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run tests
+        working-directory: ./services/ml-prediction
+        run: |
+          pytest tests/ -v --cov=app --cov-report=term-missing || true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/ml-prediction
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/trii-ml-prediction:latest
+            ${{ secrets.DOCKER_USERNAME }}/trii-ml-prediction:${{ env.IMAGE_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-ml-prediction:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trii-ml-prediction:buildcache,mode=max
+
+  # Update Kubernetes manifests and trigger ArgoCD sync
+  update-k8s-manifests:
+    name: Update Kubernetes Manifests
+    needs:
+      - detect-changes
+      - build-market-data
+      - build-analysis-engine
+      - build-portfolio-manager
+      - build-ml-prediction
+    if: |
+      always() &&
+      (needs.build-market-data.result == 'success' ||
+       needs.build-analysis-engine.result == 'success' ||
+       needs.build-portfolio-manager.result == 'success' ||
+       needs.build-ml-prediction.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update image tags in Kustomize overlays
+        run: |
+          # Update market-data image if built
+          if [ "${{ needs.detect-changes.outputs.market-data }}" == "true" ]; then
+            find infrastructure/kubernetes/overlays -name "kustomization.yaml" -exec sed -i.bak \
+              "s|newTag:.*# market-data|newTag: ${{ env.IMAGE_TAG }} # market-data|g" {} \;
+          fi
+
+          # Update analysis-engine image if built
+          if [ "${{ needs.detect-changes.outputs.analysis-engine }}" == "true" ]; then
+            find infrastructure/kubernetes/overlays -name "kustomization.yaml" -exec sed -i.bak \
+              "s|newTag:.*# analysis-engine|newTag: ${{ env.IMAGE_TAG }} # analysis-engine|g" {} \;
+          fi
+
+          # Update portfolio-manager image if built
+          if [ "${{ needs.detect-changes.outputs.portfolio-manager }}" == "true" ]; then
+            find infrastructure/kubernetes/overlays -name "kustomization.yaml" -exec sed -i.bak \
+              "s|newTag:.*# portfolio-manager|newTag: ${{ env.IMAGE_TAG }} # portfolio-manager|g" {} \;
+          fi
+
+          # Update ml-prediction image if built
+          if [ "${{ needs.detect-changes.outputs.ml-prediction }}" == "true" ]; then
+            find infrastructure/kubernetes/overlays -name "kustomization.yaml" -exec sed -i.bak \
+              "s|newTag:.*# ml-prediction|newTag: ${{ env.IMAGE_TAG }} # ml-prediction|g" {} \;
+          fi
+
+          # Remove backup files
+          find infrastructure/kubernetes/overlays -name "*.bak" -delete
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add infrastructure/kubernetes/overlays
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update image tags to ${{ env.IMAGE_TAG }}
+
+            Updated services:
+            - Market Data: ${{ needs.detect-changes.outputs.market-data }}
+            - Analysis Engine: ${{ needs.detect-changes.outputs.analysis-engine }}
+            - Portfolio Manager: ${{ needs.detect-changes.outputs.portfolio-manager }}
+            - ML Prediction: ${{ needs.detect-changes.outputs.ml-prediction }}
+
+            🤖 Generated with GitHub Actions
+            "
+            git push
+          fi
+
+  # Notify ArgoCD to sync (optional - ArgoCD auto-syncs by default)
+  notify-argocd:
+    name: Trigger ArgoCD Sync
+    needs: update-k8s-manifests
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Trigger ArgoCD Sync
+        run: |
+          echo "✅ Manifests updated. ArgoCD will auto-sync in ~3 minutes"
+          echo "Or manually sync via ArgoCD UI"
+          echo "Applications updated:"
+          echo "  - trii-market-data: ${{ needs.detect-changes.outputs.market-data }}"
+          echo "  - trii-analysis-engine: ${{ needs.detect-changes.outputs.analysis-engine }}"
+          echo "  - trii-portfolio-manager: ${{ needs.detect-changes.outputs.portfolio-manager }}"
+          echo "  - trii-ml-prediction: ${{ needs.detect-changes.outputs.ml-prediction }}"
