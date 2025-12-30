@@ -27,8 +27,10 @@ Add the following secrets:
 
 | Secret Name | Description | Example Value |
 |-------------|-------------|---------------|
-| `DOCKER_USERNAME` | Your DockerHub username | `jaimehenao8126` |
-| `DOCKER_PASSWORD` | DockerHub password or access token | `dckr_pat_xxx...` |
+| `DOCKERHUB_USERNAME` | Your DockerHub username | `jaimehenao8126` |
+| `DOCKERHUB_TOKEN` | DockerHub access token | `dckr_pat_xxx...` |
+
+**Note**: If you have organization-level secrets configured, the workflows will automatically use them.
 
 **How to create DockerHub Access Token:**
 1. Go to [DockerHub Settings](https://hub.docker.com/settings/security)
