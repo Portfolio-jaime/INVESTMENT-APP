@@ -11,12 +11,18 @@ spec:
   selector:
     matchLabels:
       app: rabbitmq
+      app.kubernetes.io/managed-by: argocd
+      component: messaging
+      deployment: infrastructure
   template:
     metadata:
       labels:
         app: rabbitmq
         app.kubernetes.io/name: rabbitmq
         app.kubernetes.io/component: message-queue
+        app.kubernetes.io/managed-by: argocd
+        component: messaging
+        deployment: infrastructure
     spec:
       containers:
       - name: rabbitmq
@@ -62,6 +68,11 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: rabbitmq-data
+      labels:
+        app: rabbitmq
+        app.kubernetes.io/managed-by: argocd
+        component: messaging
+        deployment: infrastructure
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
