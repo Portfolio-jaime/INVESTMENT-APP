@@ -1,33 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { getQuotes, getHistoricalData, Quote, HistoricalData } from '../services/api';
+import { getQuotes, getHistoricalData, HistoricalData } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { TrendingUp, TrendingDown, RefreshCw, AlertTriangle, Loader2 } from 'lucide-react';
+import { useAppStore, Quote } from '../store/useAppStore';
+import ServiceStatus from './common/ServiceStatus';
 
 interface DashboardProps {
   addNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ addNotification }) => {
-  const [marketOverview, setMarketOverview] = useState<Quote[]>([]);
   const [chartData, setChartData] = useState<HistoricalData[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [chartLoading, setChartLoading] = useState(false);
+
+  // Get state and actions from store
+  const quotes = useAppStore((state) => state.quotes);
+  const loading = useAppStore((state) => state.loading);
+  const error = useAppStore((state) => state.error);
+  const refreshMarketData = useAppStore((state) => state.refreshMarketData);
+  const setQuotes = useAppStore((state) => state.setQuotes);
 
   const MARKET_SYMBOLS = ['^GSPC', '^DJI', '^IXIC']; // S&P 500, Dow Jones, Nasdaq
 
   const fetchMarketOverview = async (showNotifications = false) => {
     try {
-      const quotes = await getQuotes(MARKET_SYMBOLS);
-      setMarketOverview(quotes);
-      setError(null);
+      const quotesList = await getQuotes(MARKET_SYMBOLS);
+      const quotesMap = quotesList.reduce((acc, quote) => ({
+        ...acc,
+        [quote.symbol]: {
+          symbol: quote.symbol,
+          price: quote.price,
+          change: quote.change,
+          changePercent: quote.changePercent,
+          volume: quote.volume,
+          timestamp: new Date().toISOString(),
+        }
+      }), {});
+
+      setQuotes({ ...quotes, ...quotesMap });
+
       if (showNotifications) {
         addNotification('success', 'Market data updated successfully');
       }
     } catch (err) {
       console.error('Error fetching market overview:', err);
-      setError('Failed to load market overview');
       if (showNotifications) {
         addNotification('error', 'Failed to update market data');
       }
@@ -36,18 +54,19 @@ const Dashboard: React.FC<DashboardProps> = ({ addNotification }) => {
 
   const fetchChartData = async (symbol: string, showNotifications = false) => {
     try {
+      setChartLoading(true);
       const data = await getHistoricalData(symbol, '1mo');
       setChartData(data);
-      setError(null);
       if (showNotifications) {
         addNotification('success', `Chart data for ${symbol} updated`);
       }
     } catch (err) {
       console.error('Error fetching chart data:', err);
-      setError(`Failed to load chart data for ${symbol}`);
       if (showNotifications) {
         addNotification('error', `Failed to load chart for ${symbol}`);
       }
+    } finally {
+      setChartLoading(false);
     }
   };
 
@@ -62,12 +81,10 @@ const Dashboard: React.FC<DashboardProps> = ({ addNotification }) => {
 
   useEffect(() => {
     const init = async () => {
-      setLoading(true);
       await Promise.all([
         fetchMarketOverview(),
         fetchChartData(selectedSymbol)
       ]);
-      setLoading(false);
     };
     init();
 
@@ -125,8 +142,16 @@ const Dashboard: React.FC<DashboardProps> = ({ addNotification }) => {
     );
   }
 
+  // Convert quotes object to array for market overview
+  const marketOverview = MARKET_SYMBOLS
+    .map(symbol => quotes[symbol])
+    .filter(Boolean) as Quote[];
+
   return (
     <div className="space-y-8">
+      {/* Service Status */}
+      <ServiceStatus />
+
       {/* Controls */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
@@ -217,7 +242,14 @@ const Dashboard: React.FC<DashboardProps> = ({ addNotification }) => {
         </div>
 
         <div className="h-80">
-          {chartData.length > 0 ? (
+          {chartLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+                <p className="text-slate-600 dark:text-slate-300">Loading chart data...</p>
+              </div>
+            </div>
+          ) : chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -264,9 +296,8 @@ const Dashboard: React.FC<DashboardProps> = ({ addNotification }) => {
             </ResponsiveContainer>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-                <p className="text-slate-600 dark:text-slate-300">Loading chart data...</p>
+              <div className="text-center text-slate-600 dark:text-slate-300">
+                No chart data available
               </div>
             </div>
           )}

@@ -30,8 +30,9 @@ class ApiError extends Error {
   static fromAxiosError(error: AxiosError): ApiError {
     if (error.response) {
       // Server responded with error status
+      const data = error.response.data as { message?: string } | undefined;
       return new ApiError(
-        error.response.data?.message || error.message,
+        data?.message || error.message,
         error.response.status,
         error
       );

@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle } from
 import Dashboard from './components/Dashboard';
 import Watchlist from './components/Watchlist';
 import PortfolioView from './components/PortfolioView';
+import SetupWizard from './components/SetupWizard/SetupWizard';
 
 interface Notification {
   id: string;
@@ -12,11 +13,24 @@ interface Notification {
 }
 
 const App: React.FC = () => {
+  const [setupCompleted, setSetupCompleted] = useState(
+    localStorage.getItem('trii_setup_completed') === 'true'
+  );
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+
+  // Handle setup completion
+  const handleSetupComplete = () => {
+    setSetupCompleted(true);
+  };
+
+  // Show setup wizard if not completed
+  if (!setupCompleted) {
+    return <SetupWizard onComplete={handleSetupComplete} />;
+  }
 
   // Monitor online status
   useEffect(() => {

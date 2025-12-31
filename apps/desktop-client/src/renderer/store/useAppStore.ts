@@ -280,8 +280,14 @@ export const useAppStore = create<AppState>()(
         },
 
         checkBackendHealth: async () => {
-          const services = ['market-data', 'analysis-engine', 'portfolio-manager', 'ml-prediction', 'api-gateway'];
-          const ports = { 'market-data': 8001, 'analysis-engine': 8002, 'portfolio-manager': 8003, 'ml-prediction': 8004, 'api-gateway': 8080 };
+          const services = ['market-data', 'analysis-engine', 'portfolio-manager', 'ml-prediction', 'api-gateway'] as const;
+          const ports: Record<typeof services[number], number> = {
+            'market-data': 8001,
+            'analysis-engine': 8002,
+            'portfolio-manager': 8003,
+            'ml-prediction': 8004,
+            'api-gateway': 8080
+          };
 
           let allHealthy = true;
 

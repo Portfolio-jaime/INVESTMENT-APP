@@ -1,24 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { getQuotes, Quote } from '../services/api';
-import { Plus, Search, RefreshCw, AlertTriangle, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
+import { getQuotes, Quote as APIQuote } from '../services/api';
+import { Plus, Search, RefreshCw, AlertTriangle, Loader2, TrendingUp, TrendingDown, X, Tag } from 'lucide-react';
+import { useAppStore, Quote } from '../store/useAppStore';
+import { useWatchlistStore } from '../store/useWatchlistStore';
 
 interface WatchlistProps {
   addNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
 }
 
 const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
-  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [watchlistSymbols, setWatchlistSymbols] = useState(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META']);
+
+  // Get watchlist from stores
+  const watchlistItems = useWatchlistStore((state) => state.items);
+  const addSymbol = useWatchlistStore((state) => state.addSymbol);
+  const removeSymbol = useWatchlistStore((state) => state.removeSymbol);
+  const searchTerm = useWatchlistStore((state) => state.searchTerm);
+  const setSearchTerm = useWatchlistStore((state) => state.setSearchTerm);
+
+  // Get quotes from app store
+  const quotes = useAppStore((state) => state.quotes);
+  const setQuotes = useAppStore((state) => state.setQuotes);
+
+  const watchlistSymbols = watchlistItems.map(item => item.symbol);
 
   const fetchQuotes = async (showNotifications = false) => {
     try {
       setError(null);
-      const data = await getQuotes(watchlistSymbols);
-      setQuotes(data);
+      const quotesList = await getQuotes(watchlistSymbols);
+      const quotesMap = quotesList.reduce((acc, quote) => ({
+        ...acc,
+        [quote.symbol]: {
+          symbol: quote.symbol,
+          price: quote.price,
+          change: quote.change,
+          changePercent: quote.changePercent,
+          volume: quote.volume,
+          timestamp: new Date().toISOString(),
+        }
+      }), {});
+
+      setQuotes({ ...quotes, ...quotesMap });
+
       if (showNotifications) {
         addNotification('success', 'Watchlist updated successfully');
       }
@@ -39,15 +64,13 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
     await fetchQuotes(true);
   };
 
-  const addSymbol = (symbol: string) => {
-    if (!watchlistSymbols.includes(symbol.toUpperCase())) {
-      setWatchlistSymbols(prev => [...prev, symbol.toUpperCase()]);
-      addNotification('success', `${symbol.toUpperCase()} added to watchlist`);
-    }
+  const handleAddSymbol = (symbol: string) => {
+    addSymbol(symbol, ['stocks']);
+    addNotification('success', `${symbol.toUpperCase()} added to watchlist`);
   };
 
-  const removeSymbol = (symbol: string) => {
-    setWatchlistSymbols(prev => prev.filter(s => s !== symbol));
+  const handleRemoveSymbol = (symbol: string) => {
+    removeSymbol(symbol);
     addNotification('info', `${symbol} removed from watchlist`);
   };
 
@@ -105,8 +128,16 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
     );
   }
 
-  const filteredQuotes = quotes.filter(quote =>
-    quote.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+  // Get watchlist items with current quote data
+  const watchlistWithQuotes = watchlistItems
+    .map(item => {
+      const quote = quotes[item.symbol];
+      return quote ? { ...item, quote } : null;
+    })
+    .filter(Boolean) as Array<typeof watchlistItems[0] & { quote: Quote }>;
+
+  const filteredWatchlist = watchlistWithQuotes.filter(item =>
+    item.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -145,28 +176,35 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
 
       {/* Watchlist Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredQuotes.map((quote) => {
-          const change = formatChange(quote.change, quote.changePercent);
+        {filteredWatchlist.map((item) => {
+          const change = formatChange(item.quote.change, item.quote.changePercent);
 
           return (
-            <div key={quote.symbol} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow">
+            <div key={item.symbol} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{quote.symbol}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">Stock</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{item.symbol}</h3>
+                  {item.tags.length > 0 && (
+                    <div className="flex items-center space-x-1 mt-1">
+                      <Tag size={12} className="text-slate-400" />
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        {item.tags.join(', ')}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button
-                  onClick={() => removeSymbol(quote.symbol)}
+                  onClick={() => handleRemoveSymbol(item.symbol)}
                   className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                   title="Remove from watchlist"
                 >
-                  ×
+                  <X size={18} />
                 </button>
               </div>
 
               <div className="space-y-3">
                 <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                  {formatPrice(quote.price)}
+                  {formatPrice(item.quote.price)}
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -196,13 +234,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600 dark:text-slate-300">Volume</span>
                   <span className="text-slate-900 dark:text-white font-medium">
-                    {(quote.volume / 1000000).toFixed(1)}M
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 dark:text-slate-300">Market Cap</span>
-                  <span className="text-slate-900 dark:text-white font-medium">
-                    ${(quote.marketCap / 1000000000).toFixed(1)}B
+                    {(item.quote.volume / 1000000).toFixed(1)}M
                   </span>
                 </div>
               </div>
@@ -218,7 +250,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
           {['NFLX', 'UBER', 'SPOT', 'CRM', 'ORCL', 'ADBE', 'INTC', 'AMD'].map((symbol) => (
             <button
               key={symbol}
-              onClick={() => addSymbol(symbol)}
+              onClick={() => handleAddSymbol(symbol)}
               disabled={watchlistSymbols.includes(symbol)}
               className="flex items-center justify-center px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-blue-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -230,7 +262,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
       </div>
 
       {/* Empty State */}
-      {filteredQuotes.length === 0 && !loading && (
+      {filteredWatchlist.length === 0 && !loading && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8 text-slate-400" />
