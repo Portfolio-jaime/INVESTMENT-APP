@@ -42,7 +42,7 @@ images:
   - name: jaimehenao8126/trii-portfolio-manager
     newTag: v1.0.0 # portfolio-manager
   - name: jaimehenao8126/trii-ml-prediction
-    newTag: v1.0.0 # ml-prediction
+    newTag: 962a7b750f52ce169c23b4922d51c53082b4561e # ml-prediction
 
 # ConfigMap generator for production config
 configMapGenerator:
