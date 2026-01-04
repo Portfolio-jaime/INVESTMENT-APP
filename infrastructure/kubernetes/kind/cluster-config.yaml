@@ -27,6 +27,7 @@ nodes:
     - containerPort: 8001
       hostPort: 8001
       protocol: TCP
+    image: kindest/node:v1.31.0
 
 # Networking
 networking:

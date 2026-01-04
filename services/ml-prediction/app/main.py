@@ -6,7 +6,7 @@ from prometheus_client import make_asgi_app
 import structlog
 
 from app.core.config import settings
-from app.api import predictions
+from app.api import predictions, recommendations
 
 # Configure structured logging
 structlog.configure(
@@ -53,6 +53,12 @@ app.include_router(
     predictions.router,
     prefix=f"{settings.API_V1_PREFIX}/predictions",
     tags=["ML Predictions"]
+)
+
+app.include_router(
+    recommendations.router,
+    prefix=f"{settings.API_V1_PREFIX}/recommendations",
+    tags=["Investment Recommendations"]
 )
 
 # Prometheus metrics
@@ -113,10 +119,16 @@ async def root():
             "Trading Signals - Buy/Sell/Hold recommendations",
             "Trend Analysis - Up/Down/Neutral trend prediction"
         ],
+        "recommendations": [
+            "Investment Recommendations - BUY/HOLD/AVOID signals",
+            "Multi-factor Scoring - Momentum, Volume, RSI, MACD analysis",
+            "Batch Processing - Get recommendations for multiple symbols"
+        ],
         "models": {
             "price_prediction": "Linear Regression with Moving Averages",
             "signal_generation": "RSI + MACD Analysis",
-            "trend_prediction": "Moving Average Slope Analysis"
+            "trend_prediction": "Moving Average Slope Analysis",
+            "recommendation_engine": "Multi-factor Scoring + ML Predictions"
         }
     }
 

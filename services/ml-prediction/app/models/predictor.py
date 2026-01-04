@@ -54,7 +54,7 @@ class SimplePredictor:
         df['price_change'] = df['close'].pct_change()
 
         # Fill NaN values
-        df = df.fillna(method='bfill').fillna(method='ffill')
+        df = df.bfill().ffill()
 
         # Features and target
         X = df[['day_num', 'sma_5', 'sma_10', 'volume']].values
