@@ -11,15 +11,15 @@ nodes:
         kubeletExtraArgs:
           node-labels: "ingress-ready=true"
     extraPortMappings:
-    # HTTP
-    - containerPort: 80
+    # Ingress Controller HTTP (NodePort mapping)
+    - containerPort: 31560
       hostPort: 80
       protocol: TCP
     # HTTPS
     - containerPort: 443
       hostPort: 443
       protocol: TCP
-    # ArgoCD UI
+    # ArgoCD UI (Direct NodePort)
     - containerPort: 30080
       hostPort: 8080
       protocol: TCP

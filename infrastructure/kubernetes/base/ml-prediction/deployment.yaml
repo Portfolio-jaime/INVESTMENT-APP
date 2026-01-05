@@ -10,16 +10,25 @@ spec:
   selector:
     matchLabels:
       app: ml-prediction
+      app.kubernetes.io/component: backend-service
+      app.kubernetes.io/managed-by: argocd
+      app.kubernetes.io/name: ml-prediction
+      app.kubernetes.io/part-of: trii-platform
+      tier: analysis-services
   template:
     metadata:
       labels:
         app: ml-prediction
+        app.kubernetes.io/component: backend-service
+        app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: ml-prediction
-        app.kubernetes.io/component: service
+        app.kubernetes.io/part-of: trii-platform
+        tier: analysis-services
     spec:
       containers:
       - name: ml-prediction
         image: jaimehenao8126/trii-ml-prediction:latest
+        imagePullPolicy: Always
         env:
         - name: MARKET_DATA_SERVICE_URL
           value: "http://market-data-service:8001"
