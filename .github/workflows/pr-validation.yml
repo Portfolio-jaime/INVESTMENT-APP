@@ -228,7 +228,9 @@ jobs:
       - name: Test infrastructure startup
         run: |
           # Quick test to ensure services can start
-          docker-compose -f infrastructure/docker/docker-compose.yml up -d
+          # Copy the docker-compose file to root for easy access
+          cp infrastructure/docker/docker-compose.yml .
+          docker-compose up -d
           sleep 20
           
           # Check if containers are running
@@ -236,7 +238,7 @@ jobs:
           docker ps | grep trii-redis && echo "✅ Redis container running"
           
           # Cleanup
-          docker-compose -f infrastructure/docker/docker-compose.yml down
+          docker-compose down
           echo "✅ Infrastructure test completed"
 
   # Validate Desktop Client (if changed)

@@ -270,7 +270,8 @@ jobs:
       - name: Test database initialization
         run: |
           # Start services
-          docker-compose -f infrastructure/docker/docker-compose.yml up -d
+          cp infrastructure/docker/docker-compose.yml .
+          docker-compose up -d
           
           # Wait for PostgreSQL to be ready
           sleep 30
@@ -282,7 +283,7 @@ jobs:
           docker exec trii-redis redis-cli ping
           
           # Cleanup
-          docker-compose -f infrastructure/docker/docker-compose.yml down
+          docker-compose down
           echo "✅ Infrastructure test passed"
 
   # Summary job
