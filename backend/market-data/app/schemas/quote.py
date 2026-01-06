@@ -1,7 +1,7 @@
 """Pydantic schemas for quotes."""
 
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 
@@ -63,3 +63,12 @@ class QuoteSearchResponse(BaseModel):
     type: str  # stock, etf, index
     currency: str
     country: str
+
+
+class CurrencyRate(BaseModel):
+    """Currency exchange rate schema."""
+    from_currency: str = Field(..., max_length=3)
+    to_currency: str = Field(..., max_length=3)
+    rate: float
+    date: date
+    source: str  # TRM, forex, etc.

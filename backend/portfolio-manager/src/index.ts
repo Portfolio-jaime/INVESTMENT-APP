@@ -10,6 +10,9 @@ import { AppError, ApiResponse } from './types';
 import portfolioRoutes from './routes/portfolios';
 import transactionRoutes from './routes/transactions';
 import positionRoutes from './routes/positions';
+import analyticsRoutes from './routes/analytics';
+import brokerRoutes from './routes/brokers';
+import rebalancingRoutes from './routes/rebalancing';
 
 // Load environment variables
 dotenv.config();
@@ -67,6 +70,12 @@ app.get('/', (_req: Request, res: Response) => {
         transactions: '/api/v1/portfolios/:id/transactions',
         positions: '/api/v1/portfolios/:id/positions',
         summary: '/api/v1/portfolios/:id/summary',
+        performance: '/api/v1/portfolios/:id/performance',
+        risk: '/api/v1/portfolios/:id/risk',
+        diversification: '/api/v1/portfolios/:id/diversification',
+        taxes: '/api/v1/portfolios/:id/taxes/:year',
+        brokers: '/api/v1/portfolios/:id/brokers',
+        rebalancing: '/api/v1/portfolios/:id/rebalancing',
       },
     },
   };
@@ -77,6 +86,9 @@ app.get('/', (_req: Request, res: Response) => {
 app.use('/api/v1/portfolios', portfolioRoutes);
 app.use('/api/v1/portfolios', transactionRoutes);
 app.use('/api/v1/portfolios', positionRoutes);
+app.use('/api/v1', analyticsRoutes);
+app.use('/api/v1', brokerRoutes);
+app.use('/api/v1', rebalancingRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

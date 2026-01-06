@@ -38,6 +38,20 @@ pytest-asyncio==0.23.3
 pytest-cov==4.1.0
 respx==0.22.0
 
+# Web Scraping for Colombian sources
+beautifulsoup4==4.12.2
+selenium==4.15.2
+webdriver-manager==4.0.1
+
+# Rate Limiting
+slowapi==0.1.9
+
+# Currency conversion
+forex-python==1.8
+
+# TimescaleDB (uses PostgreSQL)
+# No additional packages needed, uses asyncpg
+
 # Code Quality
 black==23.12.1
 mypy==1.8.0

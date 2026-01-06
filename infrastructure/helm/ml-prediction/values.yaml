@@ -1,0 +1,58 @@
+# Default values for ml-prediction service
+replicaCount: 1
+
+image:
+  repository: jaimehenao8126/trii-ml-prediction
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 512Mi
+
+config:
+  colombianMarkets: true
+  apiPort: 8000
+  redisHost: redis-service
+  timescaleHost: timescale-service
+  # MCP Configuration
+  mcpServerUrl: "http://mcp-server:8080"
+  mcpContextProviders: "market-data,analysis-engine,portfolio-manager"
+  # LLM Settings
+  openaiApiKey: ""
+  ollamaEndpoint: "http://ollama-service:11434"
+  llamaCppPath: "/models/llama"
+  # Colombian Market Parameters
+  trmApiUrl: "https://www.dane.gov.co"
+  localMarketDataPath: "/data/colombian-markets"
+  # Risk Assessment Thresholds
+  maxRiskScore: 0.8
+  minConfidenceLevel: 0.7
+  # Portfolio Optimization Constraints
+  maxPortfolioWeight: 0.2
+  minDiversificationRatio: 0.3
+  # Feature Flags
+  enableMcpIntegration: false
+  enableHybridLlm: false
+  enableRiskAssessment: true
+  enablePortfolioOptimization: false
+
+volumes:
+  - name: model-storage
+    persistentVolumeClaim:
+      claimName: model-pvc
+  - name: market-data-storage
+    persistentVolumeClaim:
+      claimName: market-data-pvc
+
+ingress:
+  enabled: false

@@ -8,6 +8,8 @@ from app.schemas.quote import QuoteBase, HistoricalPriceBase, QuoteSearchRespons
 from app.services.yahoo_finance import yahoo_finance_client
 from app.services.twelve_data import twelve_data_client
 from app.services.finnhub import finnhub_client
+from app.services.bvc import bvc_client
+from app.services.trm import trm_client
 import structlog
 
 logger = structlog.get_logger()
@@ -161,6 +163,7 @@ class MarketDataClient:
 
     def __init__(self):
         self.providers = [
+            ("BVC", bvc_client),  # Colombian market first
             ("Yahoo Finance", yahoo_finance_client),
             ("Twelve Data", twelve_data_client),
             ("Finnhub", finnhub_client),

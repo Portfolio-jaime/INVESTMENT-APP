@@ -6,7 +6,7 @@ from prometheus_client import make_asgi_app
 import structlog
 
 from app.core.config import settings
-from app.api import indicators
+from app.api import indicators, fundamentals, sentiment, colombian_market, llm_insights, comprehensive, realtime
 
 # Configure structured logging
 structlog.configure(
@@ -53,6 +53,42 @@ app.include_router(
     indicators.router,
     prefix=f"{settings.API_V1_PREFIX}/indicators",
     tags=["Technical Indicators"]
+)
+
+app.include_router(
+    fundamentals.router,
+    prefix=f"{settings.API_V1_PREFIX}/fundamentals",
+    tags=["Fundamental Analysis"]
+)
+
+app.include_router(
+    sentiment.router,
+    prefix=f"{settings.API_V1_PREFIX}/sentiment",
+    tags=["Sentiment Analysis"]
+)
+
+app.include_router(
+    colombian_market.router,
+    prefix=f"{settings.API_V1_PREFIX}/colombian-market",
+    tags=["Colombian Market Analysis"]
+)
+
+app.include_router(
+    llm_insights.router,
+    prefix=f"{settings.API_V1_PREFIX}/llm-insights",
+    tags=["LLM Insights"]
+)
+
+app.include_router(
+    comprehensive.router,
+    prefix=f"{settings.API_V1_PREFIX}/comprehensive",
+    tags=["Comprehensive Analysis"]
+)
+
+app.include_router(
+    realtime.router,
+    prefix=f"{settings.API_V1_PREFIX}/realtime",
+    tags=["Real-time Analysis"]
 )
 
 # Prometheus metrics
@@ -113,6 +149,14 @@ async def root():
             "RSI - Relative Strength Index",
             "MACD - Moving Average Convergence Divergence",
             "Bollinger Bands"
+        ],
+        "analysis_types": [
+            "Technical Indicators",
+            "Fundamental Analysis",
+            "Sentiment Analysis",
+            "Colombian Market Analysis",
+            "LLM Insights",
+            "Comprehensive Analysis"
         ]
     }
 

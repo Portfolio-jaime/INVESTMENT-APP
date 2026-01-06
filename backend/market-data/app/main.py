@@ -2,14 +2,19 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from prometheus_client import make_asgi_app
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
-from app.api import quotes
+from app.api import quotes, brokers, currency
 from app.db.redis import close_redis
 from app.db.session import engine, Base
 from app.models.quote import Quote, HistoricalPrice
+from app.db.timescale import setup_timescale
 import structlog
 
 # Configure structured logging
@@ -44,8 +49,12 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database tables created successfully")
+
+        # Setup TimescaleDB
+        await setup_timescale()
+
     except Exception as e:
-        logger.error("Failed to create database tables", error=str(e))
+        logger.error("Failed to setup database", error=str(e))
         raise
 
     yield
@@ -62,6 +71,12 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -73,6 +88,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(quotes.router, prefix=f"{settings.API_V1_PREFIX}/market-data", tags=["quotes"])
+app.include_router(brokers.router, prefix=f"{settings.API_V1_PREFIX}/market-data", tags=["brokers"])
+app.include_router(currency.router, prefix=f"{settings.API_V1_PREFIX}/market-data", tags=["currency"])
 
 # Prometheus metrics
 metrics_app = make_asgi_app()

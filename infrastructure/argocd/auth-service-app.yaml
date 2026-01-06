@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: auth-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/trii-platform/investment-app
+    path: infrastructure/helm/auth-service
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trii-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

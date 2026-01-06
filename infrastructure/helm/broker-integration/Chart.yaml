@@ -1,0 +1,14 @@
+apiVersion: v2
+name: broker-integration
+description: TRII Broker Integration Service - Colombian and international broker API integration
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - broker-integration
+  - colombian-brokers
+  - api-integration
+home: https://github.com/trii-platform/investment-app
+maintainers:
+  - name: TRII Team
+    email: team@trii.com

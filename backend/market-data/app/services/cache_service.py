@@ -64,5 +64,28 @@ class CacheService:
         """Cache historical data."""
         return await self.set(f"historical:{symbol}:{timeframe}", data, ttl)
 
+    async def get_currency_rate(self, from_currency: str, to_currency: str, date_key: Optional[str] = None) -> Optional[float]:
+        """Get cached currency rate."""
+        key = f"currency:{from_currency}:{to_currency}"
+        if date_key:
+            key += f":{date_key}"
+        cached = await self.get(key)
+        return cached if isinstance(cached, (int, float)) else None
+
+    async def set_currency_rate(self, from_currency: str, to_currency: str, rate: float, date_key: Optional[str] = None, ttl: int = 3600) -> bool:
+        """Cache currency rate."""
+        key = f"currency:{from_currency}:{to_currency}"
+        if date_key:
+            key += f":{date_key}"
+        return await self.set(key, rate, ttl)
+
+    async def get_broker_quote(self, broker: str, symbol: str) -> Optional[dict]:
+        """Get cached broker quote."""
+        return await self.get(f"broker:quote:{broker}:{symbol}")
+
+    async def set_broker_quote(self, broker: str, symbol: str, quote: dict, ttl: int = 60) -> bool:
+        """Cache broker quote."""
+        return await self.set(f"broker:quote:{broker}:{symbol}", quote, ttl)
+
 
 cache_service = CacheService()
