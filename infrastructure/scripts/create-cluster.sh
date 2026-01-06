@@ -36,6 +36,14 @@ kind create cluster --config "${CONFIG_FILE}" --name "${CLUSTER_NAME}"
 echo "⏳ Waiting for cluster to be ready..."
 kubectl wait --for=condition=Ready nodes --all --timeout=300s
 
+# Install NGINX Ingress Controller
+echo "📦 Installing NGINX Ingress Controller..."
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
+
+# Wait for ingress controller to be ready
+echo "⏳ Waiting for NGINX Ingress Controller to be ready..."
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/component=controller -n ingress-nginx --timeout=300s
+
 # Verify cluster
 echo "✅ Cluster created successfully!"
 kubectl get nodes

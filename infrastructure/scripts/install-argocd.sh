@@ -40,6 +40,32 @@ kubectl apply -n "${ARGOCD_NAMESPACE}" -f "https://raw.githubusercontent.com/arg
 echo "⏳ Waiting for ArgoCD components to be ready..."
 kubectl wait --for=condition=Ready pod --all -n "${ARGOCD_NAMESPACE}" --timeout=300s
 
+# Create ingress for ArgoCD
+echo "🌐 Creating ingress for ArgoCD..."
+cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: ${ARGOCD_NAMESPACE}
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: argocd.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 443
+EOF
+
 # Get initial admin password
 ARGOCD_PASSWORD=$(kubectl -n "${ARGOCD_NAMESPACE}" get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
@@ -49,8 +75,12 @@ echo "   Username: admin"
 echo "   Password: ${ARGOCD_PASSWORD}"
 echo ""
 echo "🌐 Access ArgoCD UI:"
+echo "   Option 1 - Port forward:"
 echo "   kubectl port-forward svc/argocd-server -n ${ARGOCD_NAMESPACE} 8080:443"
 echo "   Then visit: https://localhost:8080"
+echo ""
+echo "   Option 2 - Ingress (add to /etc/hosts: 127.0.0.1 argocd.local):"
+echo "   Visit: https://argocd.local"
 echo ""
 echo "💡 Next steps:"
 echo "   - Login to ArgoCD UI with the credentials above"
