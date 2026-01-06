@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ml-prediction.fullname" . }}
+  labels:
+    {{- include "ml-prediction.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ml-prediction.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ml-prediction.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.apiPort }}
+              protocol: TCP
+          env:
+            - name: COLOMBIAN_MARKETS
+              value: "{{ .Values.config.colombianMarkets }}"
+            - name: API_PORT
+              value: "{{ .Values.config.apiPort }}"
+            - name: REDIS_HOST
+              value: "{{ .Values.config.redisHost }}"
+            - name: TIMESCALE_HOST
+              value: "{{ .Values.config.timescaleHost }}"
+            # MCP Configuration
+            - name: MCP_SERVER_URL
+              value: "{{ .Values.config.mcpServerUrl }}"
+            - name: MCP_CONTEXT_PROVIDERS
+              value: "{{ .Values.config.mcpContextProviders }}"
+            # LLM Settings
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ml-prediction.fullname" . }}-secrets
+                  key: openai-api-key
+            - name: OLLAMA_ENDPOINT
+              value: "{{ .Values.config.ollamaEndpoint }}"
+            - name: LLAMA_CPP_PATH
+              value: "{{ .Values.config.llamaCppPath }}"
+            # Colombian Market Parameters
+            - name: TRM_API_URL
+              value: "{{ .Values.config.trmApiUrl }}"
+            - name: LOCAL_MARKET_DATA_PATH
+              value: "{{ .Values.config.localMarketDataPath }}"
+            # Risk Assessment Thresholds
+            - name: MAX_RISK_SCORE
+              value: "{{ .Values.config.maxRiskScore }}"
+            - name: MIN_CONFIDENCE_LEVEL
+              value: "{{ .Values.config.minConfidenceLevel }}"
+            # Portfolio Optimization Constraints
+            - name: MAX_PORTFOLIO_WEIGHT
+              value: "{{ .Values.config.maxPortfolioWeight }}"
+            - name: MIN_DIVERSIFICATION_RATIO
+              value: "{{ .Values.config.minDiversificationRatio }}"
+            # Feature Flags
+            - name: ENABLE_MCP_INTEGRATION
+              value: "{{ .Values.config.enableMcpIntegration }}"
+            - name: ENABLE_HYBRID_LLM
+              value: "{{ .Values.config.enableHybridLlm }}"
+            - name: ENABLE_RISK_ASSESSMENT
+              value: "{{ .Values.config.enableRiskAssessment }}"
+            - name: ENABLE_PORTFOLIO_OPTIMIZATION
+              value: "{{ .Values.config.enablePortfolioOptimization }}"
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+            - name: market-data-storage
+              mountPath: /data
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        {{- toYaml .Values.volumes | nindent 8 }}

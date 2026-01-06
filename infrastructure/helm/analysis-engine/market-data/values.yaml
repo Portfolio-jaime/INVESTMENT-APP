@@ -1,0 +1,29 @@
+# Default values for market-data service
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+config:
+  colombianMarkets: true
+  apiPort: 8000
+  redisHost: redis-service
+  timescaleHost: timescale-service
+
+ingress:
+  enabled: false

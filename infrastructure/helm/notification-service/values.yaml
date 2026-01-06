@@ -1,0 +1,25 @@
+# Default values for notification-service
+replicaCount: 1
+
+image:
+  repository: jaimehenao8126/trii-notification-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+config:
+  apiPort: 8080
+  redisHost: redis-service
+  postgresHost: postgres-service

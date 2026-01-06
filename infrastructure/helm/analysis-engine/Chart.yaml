@@ -1,0 +1,14 @@
+apiVersion: v2
+name: analysis-engine
+description: TRII Analysis Engine Service - Technical analysis and indicators for Colombian markets
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - analysis-engine
+  - technical-analysis
+  - colombian-markets
+home: https://github.com/trii-platform/investment-app
+maintainers:
+  - name: TRII Team
+    email: team@trii.com
