@@ -11,6 +11,15 @@ const poolConfig: PoolConfig = {
   connectionTimeoutMillis: 2000,
 };
 
+// Debug logging
+console.log('Database config:', {
+  host: poolConfig.host,
+  port: poolConfig.port,
+  user: poolConfig.user,
+  database: poolConfig.database,
+  hasPassword: !!poolConfig.password,
+});
+
 export const pool = new Pool(poolConfig);
 
 // Test database connection

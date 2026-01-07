@@ -64,4 +64,10 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
+# Debug logging
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info(f"Database config: host={settings.DB_HOST}, user={settings.DB_USER}, db={settings.DB_NAME}")
+
 settings = Settings()
