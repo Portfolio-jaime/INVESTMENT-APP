@@ -3,7 +3,7 @@ replicaCount: 1
 
 image:
   repository: jaimehenao8126/trii-ml-prediction
-  tag: "latest"
+  tag: "676d767710526c17453d1cbd956db6557d6a5c77"
   pullPolicy: IfNotPresent
 
 service:
