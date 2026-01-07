@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/trii-platform/investment-app
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP
     path: infrastructure/helm/ml-prediction
     targetRevision: HEAD
   destination:
