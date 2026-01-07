@@ -27,6 +27,8 @@ spec:
               value: "{{ .Values.config.colombianMarkets }}"
             - name: API_PORT
               value: "{{ .Values.config.apiPort }}"
+            - name: DB_HOST
+              value: "{{ .Values.config.timescaleHost }}"
             - name: REDIS_HOST
               value: "{{ .Values.config.redisHost }}"
             - name: TIMESCALE_HOST

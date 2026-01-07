@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     
     # Database
-    DB_HOST: str = "postgres"
+    DB_HOST: str = "postgres-service"
     DB_PORT: str = "5432"
     DB_USER: str = "postgres"
     DB_PASSWORD: str = "postgres"
