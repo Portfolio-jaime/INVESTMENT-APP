@@ -10,6 +10,7 @@ on:
       - 'backend/**'
       - 'app/**'
       - 'infrastructure/docker/**'
+      - 'infrastructure/helm/**'
       - '.github/workflows/**'
   pull_request:
     branches:
