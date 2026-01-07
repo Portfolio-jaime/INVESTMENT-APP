@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "market-data.fullname" . }}
+  name: {{ include "portfolio-manager.fullname" . }}
   labels:
-    {{- include "market-data.labels" . | nindent 4 }}
+    {{- include "portfolio-manager.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "market-data.selectorLabels" . | nindent 6 }}
+      {{- include "portfolio-manager.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "market-data.selectorLabels" . | nindent 8 }}
+        {{- include "portfolio-manager.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -27,6 +27,8 @@ spec:
               value: "{{ .Values.config.colombianMarkets }}"
             - name: API_PORT
               value: "{{ .Values.config.apiPort }}"
+            - name: DB_HOST
+              value: "{{ .Values.config.timescaleHost }}"
             - name: REDIS_HOST
               value: "{{ .Values.config.redisHost }}"
             - name: TIMESCALE_HOST

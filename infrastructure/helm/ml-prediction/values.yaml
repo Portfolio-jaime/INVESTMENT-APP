@@ -23,7 +23,7 @@ config:
   colombianMarkets: true
   apiPort: 8004
   redisHost: redis-service
-  timescaleHost: timescale-service
+  timescaleHost: postgres-service
   # MCP Configuration
   mcpServerUrl: "http://mcp-server:8080"
   mcpContextProviders: "market-data,analysis-engine,portfolio-manager"
