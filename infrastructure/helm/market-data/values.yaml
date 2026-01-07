@@ -3,7 +3,7 @@ replicaCount: 1
 
 image:
   repository: jaimehenao8126/trii-market-data
-  tag: "latest"
+  tag: "776496072f2a56ca5a8e3a2c965fbdccf224d412"
   pullPolicy: IfNotPresent
 
 service:
