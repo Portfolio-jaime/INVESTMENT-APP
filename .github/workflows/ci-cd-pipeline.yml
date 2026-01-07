@@ -114,6 +114,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/market-data/values.yaml
           git commit -m "Update market-data image tag to ${{ env.IMAGE_TAG }} [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin ${{ github.ref_name }}
           git push
 
   # Build and test Analysis Engine
@@ -174,6 +175,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/analysis-engine/values.yaml
           git commit -m "Update analysis-engine image tag to ${{ env.IMAGE_TAG }} [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin ${{ github.ref_name }}
           git push
 
   # Build and test Portfolio Manager
@@ -235,6 +237,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/portfolio-manager/values.yaml
           git commit -m "Update portfolio-manager image tag to ${{ env.IMAGE_TAG }} [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin ${{ github.ref_name }}
           git push
 
   # Build and test ML Prediction Service
@@ -295,6 +298,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/ml-prediction/values.yaml
           git commit -m "Update ml-prediction image tag to ${{ env.IMAGE_TAG }} [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin ${{ github.ref_name }}
           git push
 
   # Test infrastructure
