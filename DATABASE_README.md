@@ -43,7 +43,7 @@ Set environment variables for database connections:
 export POSTGRES_HOST=localhost
 export POSTGRES_PORT=5432
 export POSTGRES_DB=trii_platform
-export POSTGRES_USER=trii_user
+export POSTGRES_USER=postgres
 export POSTGRES_PASSWORD=trii_password
 
 # MongoDB

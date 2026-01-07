@@ -5,7 +5,7 @@ metadata:
   namespace: trii-platform
 data:
   POSTGRES_DB: trii_dev
-  POSTGRES_USER: trii_user
+  POSTGRES_USER: postgres
   POSTGRES_PASSWORD: trii_password
 ---
 apiVersion: v1

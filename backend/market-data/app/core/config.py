@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Database
     DB_HOST: str = "postgres-service"
     DB_PORT: str = "5432"
-    DB_USER: str = "trii_user"
+    DB_USER: str = "postgres"
     DB_PASSWORD: str = "trii_password"
     DB_NAME: str = "trii_dev"
     DATABASE_POOL_SIZE: int = 20

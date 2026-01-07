@@ -79,7 +79,7 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: trii
-      POSTGRES_USER: trii_user
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: trii_pass
     ports:
       - "5432:5432"

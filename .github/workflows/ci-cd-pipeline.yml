@@ -99,6 +99,7 @@ jobs:
         with:
           context: ./backend/market-data
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:${{ env.IMAGE_TAG }}
@@ -158,6 +159,7 @@ jobs:
         with:
           context: ./backend/analysis-engine
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:${{ env.IMAGE_TAG }}
@@ -218,6 +220,7 @@ jobs:
         with:
           context: ./backend/portfolio-manager
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:${{ env.IMAGE_TAG }}
@@ -277,6 +280,7 @@ jobs:
         with:
           context: ./backend/ml-prediction
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:${{ env.IMAGE_TAG }}
@@ -318,7 +322,7 @@ jobs:
           sleep 30
           
           # Test database connection
-          docker exec trii-postgres psql -U trii_user -d trii -c "SELECT COUNT(*) FROM portfolio.portfolios;"
+          docker exec trii-postgres psql -U postgres -d trii -c "SELECT COUNT(*) FROM portfolio.portfolios;"
           
           # Test Redis connection
           docker exec trii-redis redis-cli ping

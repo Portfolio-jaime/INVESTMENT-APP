@@ -128,7 +128,7 @@ connect_psql() {
         exit 1
     fi
 
-    docker exec -it trii-postgres psql -U trii_user -d trii
+    docker exec -it trii-postgres psql -U postgres -d trii
 }
 
 connect_redis() {
@@ -152,7 +152,7 @@ health_check() {
 
     # Check PostgreSQL
     if docker ps | grep -q trii-postgres; then
-        if docker exec trii-postgres pg_isready -U trii_user -d trii &>/dev/null; then
+        if docker exec trii-postgres pg_isready -U postgres -d trii &>/dev/null; then
             echo -e "${GREEN}✅ PostgreSQL: Healthy${NC}"
         else
             echo -e "${RED}❌ PostgreSQL: Unhealthy${NC}"

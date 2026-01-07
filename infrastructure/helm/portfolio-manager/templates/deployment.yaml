@@ -28,11 +28,11 @@ spec:
             - name: API_PORT
               value: "{{ .Values.config.apiPort }}"
             - name: DATABASE_URL
-              value: "postgresql://trii_user:trii_password@{{ .Values.config.timescaleHost }}:5432/trii_dev"
+              value: "postgresql://postgres:trii_password@{{ .Values.config.timescaleHost }}:5432/trii_dev"
             - name: DB_HOST
               value: "{{ .Values.config.timescaleHost }}"
             - name: DB_USER
-              value: "trii_user"
+              value: "postgres"
             - name: DB_PASSWORD
               value: "trii_password"
             - name: DB_NAME
