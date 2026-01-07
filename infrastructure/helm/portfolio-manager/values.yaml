@@ -8,8 +8,8 @@ image:
 
 service:
   type: ClusterIP
-  port: 80
-  targetPort: 80
+  port: 8003
+  targetPort: 8003
 
 resources:
   limits:
@@ -21,7 +21,7 @@ resources:
 
 config:
   colombianMarkets: true
-  apiPort: 8000
+  apiPort: 8003
   redisHost: redis-service
   timescaleHost: timescale-service
 
