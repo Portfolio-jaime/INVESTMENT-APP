@@ -27,6 +27,8 @@ spec:
               value: "{{ .Values.config.colombianMarkets }}"
             - name: API_PORT
               value: "{{ .Values.config.apiPort }}"
+            - name: DB_HOST
+              value: "{{ .Values.config.timescaleHost }}"
             - name: REDIS_HOST
               value: "{{ .Values.config.redisHost }}"
             - name: TIMESCALE_HOST
@@ -38,10 +40,7 @@ spec:
               value: "{{ .Values.config.mcpContextProviders }}"
             # LLM Settings
             - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "ml-prediction.fullname" . }}-secrets
-                  key: openai-api-key
+              value: "{{ .Values.config.openaiApiKey }}"
             - name: OLLAMA_ENDPOINT
               value: "{{ .Values.config.ollamaEndpoint }}"
             - name: LLAMA_CPP_PATH
