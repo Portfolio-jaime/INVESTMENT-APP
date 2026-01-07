@@ -29,6 +29,12 @@ spec:
               value: "{{ .Values.config.apiPort }}"
             - name: DB_HOST
               value: "{{ .Values.config.timescaleHost }}"
+            - name: DB_USER
+              value: "trii_user"
+            - name: DB_PASSWORD
+              value: "trii_password"
+            - name: DB_NAME
+              value: "trii_dev"
             - name: REDIS_HOST
               value: "{{ .Values.config.redisHost }}"
             - name: TIMESCALE_HOST

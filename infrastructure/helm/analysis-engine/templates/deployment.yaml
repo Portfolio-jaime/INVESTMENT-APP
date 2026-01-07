@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "market-data.fullname" . }}
+  name: {{ include "analysis-engine.fullname" . }}
   labels:
-    {{- include "market-data.labels" . | nindent 4 }}
+    {{- include "analysis-engine.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "market-data.selectorLabels" . | nindent 6 }}
+      {{- include "analysis-engine.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "market-data.selectorLabels" . | nindent 8 }}
+        {{- include "analysis-engine.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
