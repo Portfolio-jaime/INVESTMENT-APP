@@ -28,15 +28,24 @@ spec:
             - name: API_PORT
               value: "{{ .Values.config.apiPort }}"
             - name: DATABASE_URL
-              value: "postgresql://postgres:trii_password@{{ .Values.config.timescaleHost }}:5432/trii_dev"
+              value: "postgresql://postgres:postgres@{{ .Values.config.timescaleHost }}:5432/trii_dev"
             - name: DB_HOST
               value: "{{ .Values.config.timescaleHost }}"
             - name: DB_USER
-              value: "postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
             - name: DB_PASSWORD
-              value: "trii_password"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
             - name: DB_NAME
-              value: "trii_dev"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: database
             - name: REDIS_HOST
               value: "{{ .Values.config.redisHost }}"
             - name: TIMESCALE_HOST

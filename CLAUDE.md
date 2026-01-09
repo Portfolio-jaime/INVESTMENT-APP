@@ -6,7 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **TRII Investment Decision Support Platform** - A comprehensive desktop application for detecting optimal investment opportunities using real-time data analysis, technical indicators, and machine learning predictions.
 
-**Architecture**: Microservices-based platform with Electron frontend, Python/Node.js backends, deployed via Docker Compose (migrating to Kubernetes).
+**Architecture**: Microservices-based platform with Electron frontend, Python/Node.js backends, deployed via Docker Compose.
+
+### ⚠️ Important: Architecture Refactoring in Progress
+
+This project is undergoing a **clean architecture refactoring**:
+
+- **New Structure**: `app/` directory (clean architecture with separate electron/frontend/shared)
+- **Legacy Structure**: `apps/desktop-client/` (original Electron app)
+- **Backend**: Moved from `services/` to `backend/` directory
+- **Infrastructure**: Simplified from full K8s setup to minimal Docker Compose (PostgreSQL + Redis only)
+- **Removed**: RabbitMQ, MinIO, and over 118 Kubernetes files
+
+**Current Status**: See `REFACTORING_PROGRESS.md` for detailed status. Both structures coexist during transition.
+
+**For New Development**: Use `app/` structure and `backend/` services.
 
 ## Development Commands
 
@@ -40,6 +54,24 @@ pnpm clean
 ```
 
 ### Desktop Client (Electron)
+
+#### New Architecture (Recommended)
+Located in `app/` directory with clean separation:
+
+```bash
+# Start new architecture app (from root)
+# Note: May require additional setup - see REFACTORING_PROGRESS.md
+cd app
+npm install
+npm start
+
+# Structure:
+# - app/electron/      - Main process code
+# - app/frontend/      - React UI components
+# - app/shared/        - Shared utilities
+```
+
+#### Legacy Architecture (Currently Active)
 Located in `apps/desktop-client/`
 
 ```bash
@@ -53,11 +85,13 @@ npm run build          # Build for production
 npm run package        # Package as distributable
 ```
 
+**Note**: The legacy structure in `apps/desktop-client/` is currently the active implementation. The new `app/` structure is being developed as part of the clean architecture refactoring.
+
 ### Backend Services
 
 #### Market Data Service (FastAPI/Python)
 ```bash
-cd services/market-data
+cd backend/market-data
 
 # Install dependencies
 pip install -r requirements.txt
@@ -75,9 +109,9 @@ pylint app/                    # Linting
 uvicorn app.main:app --reload --port 8001
 ```
 
-#### Portfolio Manager (NestJS/Node.js)
+#### Portfolio Manager (Express/Node.js)
 ```bash
-cd services/portfolio-manager
+cd backend/portfolio-manager
 
 # Install dependencies
 npm install
@@ -99,7 +133,7 @@ npm run format
 
 #### ML Prediction Service (FastAPI/Python)
 ```bash
-cd services/ml-prediction
+cd backend/ml-prediction
 
 # Install dependencies
 pip install -r requirements.txt
@@ -113,7 +147,7 @@ pytest
 
 #### Analysis Engine (FastAPI/Python)
 ```bash
-cd services/analysis-engine
+cd backend/analysis-engine
 
 # Run locally (port 8002)
 uvicorn app.main:app --reload --port 8002
@@ -121,79 +155,91 @@ uvicorn app.main:app --reload --port 8002
 
 ### Infrastructure
 
-#### Docker Compose (Current)
+#### Docker Compose (Simplified Infrastructure)
+Located in `infrastructure/docker/`
+
 ```bash
-# Start all services
-docker-compose up -d
+# Start infrastructure services (PostgreSQL + Redis)
+docker-compose -f infrastructure/docker/docker-compose.yml up -d
 
 # View logs
-docker-compose logs -f [service-name]
+docker-compose -f infrastructure/docker/docker-compose.yml logs -f [service-name]
 
 # Stop all services
-docker-compose down
+docker-compose -f infrastructure/docker/docker-compose.yml down
 
-# Rebuild specific service
-docker-compose build [service-name]
-docker-compose up -d [service-name]
+# Common services:
+# - postgres (PostgreSQL + TimescaleDB)
+# - redis
 ```
 
-#### Kubernetes (In Migration)
-Uses Kind (Kubernetes in Docker) + ArgoCD for GitOps.
+**Note**: The infrastructure has been simplified to only include essential services (PostgreSQL and Redis). Backend microservices run independently during development.
+
+#### Kubernetes (Optional/Advanced)
+The project includes Kubernetes manifests for advanced deployments, though the infrastructure has been simplified.
 
 ```bash
-# Setup local Kind cluster
-./scripts/setup-argocd-access.sh
+# Setup local Kind cluster (optional)
+./scripts/argocd/setup-argocd-access.sh
 
 # Switch contexts
 ./scripts/k8s-context-selector.sh
 
-# Connect to PostgreSQL
+# Connect to PostgreSQL (K8s deployment)
 ./scripts/connect-postgres-now.sh
 ./scripts/postgres-ingress-connection.sh
 
 # Database operations
 ./scripts/database/run_migrations.sh
-./scripts/populate-test-data.sh
 
 # Debug applications
 ./scripts/debug-app.sh
 ./scripts/diagnose-postgres.sh
+
+# Select Docker context
+./scripts/docker-context-selector.sh
 ```
+
+**Note**: The Kubernetes setup is available but simplified. For local development, Docker Compose is recommended.
 
 ## Architecture Overview
 
 ### Monorepo Structure
 ```
 investment-app/
-├── apps/                    # Frontend applications
-│   └── desktop-client/      # Electron + React + TypeScript
-├── services/                # Backend microservices
+├── app/                     # Refactored Electron application
+│   ├── electron/            # Electron main process
+│   ├── frontend/            # React UI components
+│   └── shared/              # Shared utilities
+├── apps/                    # Original frontend applications
+│   └── desktop-client/      # Electron + React + TypeScript (legacy)
+├── backend/                 # Backend microservices
 │   ├── market-data/         # FastAPI - Real-time market data (port 8001)
 │   ├── analysis-engine/     # FastAPI - Technical analysis (port 8002)
-│   ├── portfolio-manager/   # NestJS - Portfolio management (port 8003)
+│   ├── portfolio-manager/   # Express/Node.js - Portfolio management (port 8003)
 │   ├── ml-prediction/       # FastAPI - ML predictions (port 8004)
-│   ├── notification/        # Notification service
-│   └── risk-assessment/     # Risk assessment service
+│   └── gateway/             # API gateway
+├── shared/                  # Shared backend utilities
 ├── libs/                    # Shared libraries
 │   ├── api-client/          # API client utilities
 │   ├── common/              # Common TypeScript utilities
 │   └── python-common/       # Common Python utilities
 ├── infrastructure/          # Infrastructure as Code
-│   ├── docker/              # Docker Compose configs
-│   ├── kubernetes/          # K8s manifests (base, overlays, ArgoCD)
-│   ├── monitoring/          # Prometheus, Grafana, Loki
-│   ├── nginx/               # Nginx configurations
-│   └── terraform/           # Terraform IaC
-└── scripts/                 # Automation scripts
+│   ├── docker/              # Simplified Docker Compose (PostgreSQL + Redis)
+│   ├── kubernetes/          # K8s manifests (archived/simplified)
+│   └── monitoring/          # Prometheus, Grafana, Loki
+└── scripts/                 # Automation scripts (30+ utilities)
 ```
+
+**Note**: The project underwent a major refactoring to simplify architecture. The `app/` directory contains the new clean architecture, while `apps/desktop-client/` is the legacy structure.
 
 ### Service Dependencies & Ports
 
 **Infrastructure Services:**
 - PostgreSQL (TimescaleDB): 5433 → 5432 (time-series data)
 - Redis: 6379 (caching)
-- RabbitMQ: 5672 (messaging), 15672 (management UI)
-- MinIO: 9000 (S3-compatible storage), 9001 (console)
+
+**Note**: Infrastructure has been simplified. RabbitMQ and MinIO were removed during refactoring.
 
 **Application Services:**
 - market-data: 8001 (depends on: postgres, redis)
@@ -226,18 +272,21 @@ investment-app/
 - pytest (testing)
 
 **Backend - Node.js Services:**
-- Express (web framework)
+- Express (web framework) - Used in portfolio-manager service
 - TypeScript
 - pg (PostgreSQL client)
 - Axios (HTTP client)
 - Jest (testing)
 
+**Note**: Portfolio-manager uses Express/Node.js, not NestJS as originally planned.
+
 **Infrastructure:**
-- Docker + Docker Compose
-- Kubernetes + Kind (local development)
-- ArgoCD (GitOps CD)
-- Prometheus + Grafana (monitoring)
-- Loki (log aggregation)
+- Docker + Docker Compose (primary deployment method)
+- Kubernetes + Kind (optional, for advanced deployments)
+- ArgoCD (optional, GitOps CD)
+- GitHub Actions (CI/CD pipelines)
+- Prometheus + Grafana (monitoring, optional)
+- Loki (log aggregation, optional)
 
 ## Important Patterns & Conventions
 
@@ -270,12 +319,12 @@ investment-app/
 - TypeScript: prettier (formatting), eslint (linting)
 - Pre-commit hooks via Husky (see `.husky/`)
 
-### Kubernetes Deployment
+### Kubernetes Deployment (Optional/Simplified)
+- **Status**: Simplified infrastructure, K8s optional for advanced use
 - Uses Kustomize for manifest management
-- Base manifests in `infrastructure/kubernetes/base/`
-- Environment overlays in `infrastructure/kubernetes/overlays/` (staging, prod)
-- ArgoCD configurations in `infrastructure/kubernetes/argocd/`
-- Each service has: Deployment, Service, and optional Ingress
+- Manifests available in `infrastructure/kubernetes/`
+- ArgoCD configurations available for GitOps deployments
+- **For local development**: Use Docker Compose instead
 
 ### Docker Build Context
 - Each service has its own Dockerfile
@@ -288,48 +337,160 @@ investment-app/
 
 ### Adding a New Feature
 1. Identify which service(s) need changes
-2. For frontend: work in `apps/desktop-client/src/`
-3. For backend: work in appropriate `services/*/app/` directory
+2. For frontend:
+   - New architecture: work in `app/frontend/components/`
+   - Legacy: work in `apps/desktop-client/src/`
+3. For backend: work in appropriate `backend/*/app/` directory
 4. Add tests alongside code changes
 5. Update API contracts if service interfaces change
-6. Test locally with Docker Compose
-7. Update Kubernetes manifests if deployment changes needed
+6. Test locally:
+   - Start infrastructure: `docker-compose -f infrastructure/docker/docker-compose.yml up -d`
+   - Start backend service: `cd backend/[service-name] && uvicorn app.main:app --reload`
+   - Start frontend: `pnpm dev`
+7. Update Kubernetes manifests if needed (optional for advanced deployments)
 
 ### Debugging Services
-- Check service logs: `docker-compose logs -f [service-name]`
-- Access service directly via exposed ports
+- Check infrastructure logs: `docker-compose -f infrastructure/docker/docker-compose.yml logs -f [service-name]`
+- Access services directly via exposed ports (8001-8004)
 - Use `/health` endpoints to verify service status
-- For Kubernetes: use debug scripts in `scripts/`
+- Backend service logs: Check console output when running with uvicorn/npm
 - PostgreSQL debugging: `./scripts/diagnose-postgres.sh`
+- Application debugging: `./scripts/debug-app.sh`
 
-### Database Migrations
-- Located in individual service directories
+### Database Operations
+- Database schema in `infrastructure/docker/init.sql`
 - Run migrations via `./scripts/database/run_migrations.sh`
-- Test data population: `./scripts/populate-test-data.sh`
+- Direct PostgreSQL connection (when running locally):
+  - Host: localhost
+  - Port: 5433
+  - Database: trii_dev
+  - User: postgres
+  - Password: postgres
+- Connection string: `postgresql://postgres:postgres@localhost:5433/trii_dev`
 
-### Working with Kubernetes
-- Local development uses Kind cluster
-- ArgoCD syncs from Git repository
-- Access ArgoCD: `./scripts/setup-argocd-access.sh`
+### Working with Kubernetes (Optional)
+- Local development can use Kind cluster (optional, advanced)
+- ArgoCD available for GitOps deployments
+- Access ArgoCD: `./scripts/argocd/setup-argocd-access.sh`
 - Switch contexts: `./scripts/k8s-context-selector.sh`
-- See `infrastructure/kubernetes/README.md` for detailed guide
-- Migration plan documented in `PLAN_MIGRACION_KUBERNETES.md`
+- See `infrastructure/kubernetes/` for K8s manifests
+- **Note**: For most development, Docker Compose is sufficient
 
 ## Key Configuration Files
 
-- `pnpm-workspace.yaml` - Defines workspace packages
-- `docker-compose.yml` - Links to `infrastructure/docker/docker-compose.yml`
-- `infrastructure/kubernetes/base/kustomization.yaml` - Base K8s resources
+- `pnpm-workspace.yaml` - Defines workspace packages (apps, backend, libs)
+- `infrastructure/docker/docker-compose.yml` - Infrastructure services (PostgreSQL + Redis)
+- `infrastructure/docker/init.sql` - Database schema and initialization
+- `backend/*/requirements.txt` - Python service dependencies
+- `backend/portfolio-manager/package.json` - Node.js service dependencies
 - `.env` files in service directories - Service-specific configuration
-- `init.sh` - Automated development environment setup
+- `REFACTORING_PROGRESS.md` - Current refactoring status and architecture changes
+- `DATABASE_README.md` - Database schema documentation
 
 ## Node Version Requirements
 - Node.js >= 18.0.0
 - pnpm >= 8.0.0
 - Python >= 3.11 (for Python services)
 
+## Utility Scripts
+
+The `scripts/` directory contains 30+ automation scripts:
+
+### Database Scripts
+- `./scripts/database/run_migrations.sh` - Run database migrations
+- `./scripts/connect-postgres-now.sh` - Connect to PostgreSQL
+- `./scripts/diagnose-postgres.sh` - PostgreSQL diagnostics
+
+### Kubernetes Scripts (Optional/Advanced)
+- `./scripts/k8s-context-selector.sh` - Switch K8s contexts
+- `./scripts/debug-app.sh` - Debug K8s applications
+- `./scripts/diagnose-cluster.sh` - Cluster diagnostics
+- `./scripts/argocd/setup-argocd-access.sh` - Setup ArgoCD access
+
+### Docker Scripts
+- `./scripts/docker-context-selector.sh` - Switch Docker contexts
+- `./scripts/configure-hosts.sh` - Configure /etc/hosts for local development
+
+### Deployment Scripts
+- Located in `./scripts/deployment/`
+- See individual scripts for deployment automation
+
+## CI/CD Pipeline
+
+GitHub Actions workflows in `.github/workflows/`:
+
+- **ci-cd-pipeline.yml** - Main CI/CD pipeline
+  - Automatically detects changed services
+  - Builds and pushes Docker images to DockerHub
+  - Updates Kubernetes manifests with new image tags
+  - Triggers ArgoCD sync (if configured)
+
+- **pr-validation.yml** - Pull request validation
+  - Runs tests across all packages
+  - Performs linting and type checking
+  - Validates code quality
+
+**Docker Images**: Published to DockerHub
+- `trii/market-data`
+- `trii/analysis-engine`
+- `trii/portfolio-manager`
+- `trii/ml-prediction`
+
+## Development Status & Priorities
+
+### Current Phase: Clean Architecture Refactoring
+
+The project is transitioning to a simplified, clean architecture:
+
+**Completed:**
+- ✅ Simplified infrastructure (removed 118 K8s files, RabbitMQ, MinIO)
+- ✅ Backend services reorganized in `backend/` directory
+- ✅ New frontend structure created in `app/` directory
+- ✅ Database schema designed (see `infrastructure/docker/init.sql`)
+- ✅ Recommendations UI component created (`app/frontend/components/RecommendationsView.tsx`)
+- ✅ CI/CD pipeline with automatic service detection
+
+**In Progress:**
+- 🔄 Completing migration from `apps/desktop-client/` to `app/` structure
+- 🔄 Integrating new UI components with backend services
+- 🔄 API Gateway setup in `backend/gateway/`
+
+**Key Development Guidelines:**
+1. **Prefer `backend/` over `services/`** - Services moved to backend directory
+2. **Use simplified Docker Compose** - K8s is optional for advanced use
+3. **New features in `app/`** - Use new clean architecture when possible
+4. **Check `REFACTORING_PROGRESS.md`** - Always review current refactoring status before major changes
+5. **Simple over complex** - Infrastructure has been intentionally simplified
+
+### Quick Start for Development
+
+```bash
+# 1. Install dependencies
+pnpm install
+
+# 2. Start infrastructure (PostgreSQL + Redis)
+docker-compose -f infrastructure/docker/docker-compose.yml up -d
+
+# 3. Start a backend service (example: market-data)
+cd backend/market-data
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8001
+
+# 4. Start desktop client (legacy, currently active)
+cd apps/desktop-client
+npm start
+
+# Or use root command
+pnpm dev
+```
+
 ## Additional Documentation
 - `README.md` - Quick start guide
-- `PLAN_MIGRACION_KUBERNETES.md` - Kubernetes migration plan
-- `infrastructure/kubernetes/README.md` - K8s setup guide
-- Service-specific READMEs in each `services/*/README.md`
+- `PROJECT_STATUS.md` - **⭐ Comprehensive project status and roadmap**
+- `REFACTORING_PROGRESS.md` - **⭐ Clean architecture refactoring status (IMPORTANT)**
+- `CLEAN_ARCHITECTURE_PLAN.md` - Architecture refactoring plan
+- `DATABASE_README.md` - Database schema and design
+- `TESTING_GUIDE.md` - Testing procedures and API examples
+- Service-specific READMEs in each `backend/*/README.md`
+- `.github/workflows/README.md` - CI/CD pipeline documentation
+- `.github/CICD_SETUP.md` - CI/CD setup and configuration
