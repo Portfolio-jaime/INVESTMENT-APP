@@ -1,0 +1,18 @@
+apiVersion: v2
+name: infrastructure-base
+description: TRII Platform Base Infrastructure Components
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - trii
+  - infrastructure
+  - postgres
+  - redis
+  - rabbitmq
+home: https://github.com/Portfolio-jaime/INVESTMENT-APP
+sources:
+  - https://github.com/Portfolio-jaime/INVESTMENT-APP
+maintainers:
+  - name: TRII Team
+    email: info@trii.com

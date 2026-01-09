@@ -38,6 +38,8 @@ jobs:
       landing-page: ${{ steps.filter.outputs.landing-page }}
       infrastructure: ${{ steps.filter.outputs.infrastructure }}
       argocd: ${{ steps.filter.outputs.argocd }}
+      infrastructure-base: ${{ steps.filter.outputs.infrastructure-base }}
+      infrastructure-helm: ${{ steps.filter.outputs.infrastructure-helm }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,6 +71,12 @@ jobs:
               - 'infrastructure/helm/**'
             argocd:
               - 'infrastructure/argocd/**'
+            infrastructure-base:
+              - 'infrastructure/k8s-manifests/**'
+              - 'infrastructure/helm/infrastructure-base/**'
+            infrastructure-helm:
+              - 'infrastructure/helm/**'
+              - '!infrastructure/helm/infrastructure-base/**'
 
   # Build and test Market Data Service
   build-market-data:
@@ -435,7 +443,7 @@ jobs:
   update-argocd:
     name: Update ArgoCD Configurations  
     needs: detect-changes
-    if: needs.detect-changes.outputs.argocd == 'true'
+    if: needs.detect-changes.outputs.argocd == 'true' || needs.detect-changes.outputs.infrastructure-base == 'true' || needs.detect-changes.outputs.infrastructure-helm == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -460,6 +468,65 @@ jobs:
           
           echo "📊 ArgoCD applications configured:"
           ls -la infrastructure/argocd/*-app.yaml | wc -l
+
+      - name: Validate Infrastructure Helm Charts
+        if: needs.detect-changes.outputs.infrastructure-base == 'true' || needs.detect-changes.outputs.infrastructure-helm == 'true'
+        run: |
+          echo "🔍 Validating Infrastructure Helm Charts"
+          
+          # Install helm if not present
+          if ! command -v helm &> /dev/null; then
+            curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          fi
+          
+          helm version
+          
+          # Validate infrastructure-base chart
+          if [ -d "infrastructure/helm/infrastructure-base" ]; then
+            echo "📋 Validating infrastructure-base chart..."
+            helm lint infrastructure/helm/infrastructure-base
+            echo "✅ infrastructure-base chart is valid"
+          fi
+          
+          # Validate other infrastructure charts
+          for chart_dir in infrastructure/helm/*/; do
+            if [ "$(basename "$chart_dir")" != "infrastructure-base" ] && [ -f "$chart_dir/Chart.yaml" ]; then
+              chart_name=$(basename "$chart_dir")
+              echo "📋 Validating $chart_name chart..."
+              helm lint "$chart_dir"
+              echo "✅ $chart_name chart is valid"
+            fi
+          done
+
+      - name: Infrastructure Base Components Analysis
+        if: needs.detect-changes.outputs.infrastructure-base == 'true'
+        run: |
+          echo "🏗️ Infrastructure Base Components Analysis"
+          echo "==============================================" 
+          echo ""
+          
+          # Check PostgreSQL configuration
+          if grep -q "postgresql:" infrastructure/helm/infrastructure-base/values.yaml; then
+            echo "🐘 PostgreSQL: Configured"
+            echo "  - Database: $(grep 'database:' infrastructure/helm/infrastructure-base/values.yaml | awk '{print $2}')"
+            echo "  - Username: $(grep 'username:' infrastructure/helm/infrastructure-base/values.yaml | head -1 | awk '{print $2}')"
+          fi
+          
+          # Check Redis configuration  
+          if grep -q "redis:" infrastructure/helm/infrastructure-base/values.yaml; then
+            echo "🔴 Redis: Configured"
+            echo "  - Port: $(grep -A 10 'redis:' infrastructure/helm/infrastructure-base/values.yaml | grep 'port:' | awk '{print $2}')"
+          fi
+          
+          # Check RabbitMQ configuration
+          if grep -q "rabbitmq:" infrastructure/helm/infrastructure-base/values.yaml; then
+            echo "🐰 RabbitMQ: Configured"
+            echo "  - AMQP Port: $(grep -A 20 'rabbitmq:' infrastructure/helm/infrastructure-base/values.yaml | grep 'port:' | head -1 | awk '{print $2}')"
+            echo "  - Management Port: $(grep 'managementPort:' infrastructure/helm/infrastructure-base/values.yaml | awk '{print $2}')"
+          fi
+          
+          echo ""
+          echo "✅ Infrastructure base components ready for deployment"
 
       - name: Check for helm values consistency
         run: |
@@ -501,6 +568,9 @@ jobs:
           echo "  - Frontend App: ${{ needs.detect-changes.outputs.frontend-app }}"
           echo "  - Desktop Client: ${{ needs.detect-changes.outputs.desktop-client }}"
           echo "  - Infrastructure: ${{ needs.detect-changes.outputs.infrastructure }}"
+          echo "  - Infrastructure Base: ${{ needs.detect-changes.outputs.infrastructure-base }}"
+          echo "  - Infrastructure Helm: ${{ needs.detect-changes.outputs.infrastructure-helm }}"
+          echo "  - ArgoCD: ${{ needs.detect-changes.outputs.argocd }}"
           echo ""
           echo "🔧 Build Results:"
           echo "  - Market Data: ${{ needs.build-market-data.result }}"

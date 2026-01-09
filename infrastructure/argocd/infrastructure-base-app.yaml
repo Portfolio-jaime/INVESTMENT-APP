@@ -1,0 +1,101 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infrastructure-base
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
+    targetRevision: HEAD
+    path: infrastructure/helm/infrastructure-base
+    helm:
+      values: |
+        postgresql:
+          enabled: true
+          database: trii_db
+          username: trii_user
+          password: trii_password
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          persistence:
+            enabled: true
+            size: 2Gi
+        
+        redis:
+          enabled: true
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          persistence:
+            enabled: true
+            size: 1Gi
+        
+        rabbitmq:
+          enabled: true
+          username: trii_user
+          password: trii_password
+          resources:
+            limits:
+              cpu: 300m
+              memory: 512Mi
+            requests:
+              cpu: 150m
+              memory: 256Mi
+          persistence:
+            enabled: true
+            size: 1Gi
+        
+        ingress:
+          enabled: true
+          className: "nginx"
+          annotations:
+            nginx.ingress.kubernetes.io/rewrite-target: /
+          hosts:
+            - host: trii.local
+              paths:
+                - path: /
+                  pathType: Prefix
+                  service: frontend-app
+                  port: 3000
+            - host: trii-api.local
+              paths:
+                - path: /
+                  pathType: Prefix
+                  service: trii-gateway
+                  port: 8080
+            - host: rabbitmq.local
+              paths:
+                - path: /
+                  pathType: Prefix
+                  service: rabbitmq
+                  port: 15672
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trii-platform
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s
