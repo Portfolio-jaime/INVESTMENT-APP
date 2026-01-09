@@ -5,24 +5,23 @@ FROM node:18-alpine as builder
 WORKDIR /app
 
 # Copy package files
-COPY app/frontend/package*.json ./
-COPY package*.json ./
+COPY app/frontend/package*.json ./app/frontend/
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (including devDependencies for build)
+RUN cd app/frontend && npm ci
 
-# Copy frontend source code
-COPY app/frontend/ ./
-COPY app/shared/ ../shared/
+# Copy source code
+COPY app/frontend/ ./app/frontend/
+COPY app/shared/ ./app/shared/
 
 # Build the React application
-RUN npm run build
+RUN cd app/frontend && npm run build
 
 # Production stage
 FROM nginx:alpine
 
 # Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/app/frontend/dist /usr/share/nginx/html
 
 # Copy custom nginx configuration
 COPY app/frontend/nginx.conf /etc/nginx/nginx.conf
@@ -32,6 +31,9 @@ RUN addgroup -g 101 -S nginx && \
     adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx && \
     chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /etc/nginx
+
+# Install curl for health check
+RUN apk --no-cache add curl
 
 # Expose port 3000 to match our service configuration
 EXPOSE 3000
