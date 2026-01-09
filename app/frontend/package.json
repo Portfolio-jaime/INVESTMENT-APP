@@ -16,7 +16,9 @@
     "react-query": "^3.39.3",
     "react-hook-form": "^7.43.5",
     "yup": "^1.0.2",
-    "@hookform/resolvers": "^2.9.11"
+    "@hookform/resolvers": "^2.9.11",
+    "zustand": "^4.4.1",
+    "lucide-react": "^0.263.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.28",
