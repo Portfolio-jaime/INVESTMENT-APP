@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DB_HOST: str = "postgres-service"
     DB_PORT: str = "5432"
     DB_USER: str = "postgres"
-    DB_PASSWORD: str = "trii_password"
+    DB_PASSWORD: str = "postgres"
     DB_NAME: str = "trii_dev"
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
     
     # Redis
-    REDIS_HOST: str = "redis"
+    REDIS_HOST: str = "redis-service"
     REDIS_PORT: str = "6379"
     REDIS_DB: str = "0"
     REDIS_PASSWORD: str = ""
@@ -68,6 +68,7 @@ class Settings(BaseSettings):
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.info(f"Database config: host={settings.DB_HOST}, user={settings.DB_USER}, db={settings.DB_NAME}")
 
 settings = Settings()
+
+logger.info(f"Database config: host={settings.DB_HOST}, user={settings.DB_USER}, db={settings.DB_NAME}")
