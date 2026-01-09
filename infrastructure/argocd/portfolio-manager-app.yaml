@@ -9,6 +9,19 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP
     path: infrastructure/helm/portfolio-manager
     targetRevision: HEAD
+    helm:
+      values: |
+        image:
+          repository: jaimehenao8126/trii-portfolio-manager
+          tag: "latest"
+          pullPolicy: Always
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: trii-platform

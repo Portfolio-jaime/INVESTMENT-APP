@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle } from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle, Home } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Watchlist from './components/Watchlist';
 import PortfolioView from './components/PortfolioView';
 import SetupWizard from './components/SetupWizard/SetupWizard';
+import LandingPage from './components/LandingPage';
 
 interface Notification {
   id: string;
@@ -16,7 +17,7 @@ const App: React.FC = () => {
   const [setupCompleted, setSetupCompleted] = useState(
     localStorage.getItem('trii_setup_completed') === 'true'
   );
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('landing');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -70,6 +71,7 @@ const App: React.FC = () => {
   };
 
   const navigation = [
+    { id: 'landing', label: 'Inicio', icon: Home, color: 'indigo' },
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, color: 'blue' },
     { id: 'watchlist', label: 'Watchlist', icon: TrendingUp, color: 'green' },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart, color: 'purple' }
@@ -186,6 +188,7 @@ const App: React.FC = () => {
                 {navigation.find(tab => tab.id === activeTab)?.label}
               </h2>
               <p className="text-slate-600 dark:text-slate-300 mt-1">
+                {activeTab === 'landing' && 'Bienvenido a trii - Inversiones simples para colombianos'}
                 {activeTab === 'dashboard' && 'Real-time market overview and analytics'}
                 {activeTab === 'watchlist' && 'Track your favorite stocks and cryptocurrencies'}
                 {activeTab === 'portfolio' && 'Manage your investment portfolio'}
@@ -194,6 +197,7 @@ const App: React.FC = () => {
 
             {/* Content */}
             <div className="space-y-6">
+              {activeTab === 'landing' && <LandingPage />}
               {activeTab === 'dashboard' && <Dashboard addNotification={addNotification} />}
               {activeTab === 'watchlist' && <Watchlist addNotification={addNotification} />}
               {activeTab === 'portfolio' && <PortfolioView addNotification={addNotification} />}
