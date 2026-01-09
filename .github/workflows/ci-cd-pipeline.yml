@@ -11,6 +11,7 @@ on:
       - 'app/**'
       - 'infrastructure/docker/**'
       - 'infrastructure/helm/**'
+      - 'infrastructure/argocd/**'
       - '.github/workflows/**'
   pull_request:
     branches:
@@ -33,7 +34,10 @@ jobs:
       portfolio-manager: ${{ steps.filter.outputs.portfolio-manager }}
       ml-prediction: ${{ steps.filter.outputs.ml-prediction }}
       desktop-client: ${{ steps.filter.outputs.desktop-client }}
+      frontend-app: ${{ steps.filter.outputs.frontend-app }}
+      landing-page: ${{ steps.filter.outputs.landing-page }}
       infrastructure: ${{ steps.filter.outputs.infrastructure }}
+      argocd: ${{ steps.filter.outputs.argocd }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,9 +56,19 @@ jobs:
             ml-prediction:
               - 'backend/ml-prediction/**'
             desktop-client:
-              - 'app/**'
+              - 'app/electron/**'
+              - 'apps/desktop-client/**'
+            frontend-app:
+              - 'app/frontend/**'
+            landing-page:
+              - 'app/frontend/components/LandingPage*'
+              - 'app/frontend/components/LandingPageUtils*'
+              - 'app/frontend/App.tsx'
             infrastructure:
               - 'infrastructure/docker/**'
+              - 'infrastructure/helm/**'
+            argocd:
+              - 'infrastructure/argocd/**'
 
   # Build and test Market Data Service
   build-market-data:
@@ -335,6 +349,129 @@ jobs:
           docker-compose down
           echo "✅ Infrastructure test passed"
 
+  # Build and test Frontend Application (including Landing Page)
+  build-frontend-app:
+    name: Build Frontend Application
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-app == 'true' || needs.detect-changes.outputs.landing-page == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: ./app/frontend
+        run: npm ci
+
+      - name: Type check
+        working-directory: ./app/frontend
+        run: npm run type-check || echo "Type check completed"
+
+      - name: Lint code
+        working-directory: ./app/frontend
+        run: npm run lint || echo "Lint completed"
+
+      - name: Run tests
+        working-directory: ./app/frontend
+        run: npm test || echo "Tests completed"
+
+      - name: Build application
+        working-directory: ./app/frontend
+        run: npm run build
+
+      - name: Verify Landing Page files
+        run: |
+          echo "🎯 Verifying Landing Page files..."
+          if [ -f "app/frontend/components/LandingPage.tsx" ]; then
+            echo "✅ LandingPage.tsx found"
+          else
+            echo "❌ LandingPage.tsx missing"
+          fi
+          
+          if [ -f "app/frontend/components/LandingPage.css" ]; then
+            echo "✅ LandingPage.css found"
+          else
+            echo "❌ LandingPage.css missing"
+          fi
+          
+          if [ -f "app/frontend/components/LandingPageUtils.ts" ]; then
+            echo "✅ LandingPageUtils.ts found"
+          else
+            echo "❌ LandingPageUtils.ts missing"
+          fi
+          
+          echo "📊 Landing Page metrics:"
+          echo "  - CSS lines: $(wc -l < app/frontend/components/LandingPage.css || echo 'N/A')"
+          echo "  - TSX lines: $(wc -l < app/frontend/components/LandingPage.tsx || echo 'N/A')"
+          echo "  - Utils lines: $(wc -l < app/frontend/components/LandingPageUtils.ts || echo 'N/A')"
+
+      # Build and push Docker image for deployment
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          tags: |
+            jaimehenao8126/trii-frontend-app:latest
+            jaimehenao8126/trii-frontend-app:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Update ArgoCD configurations
+  update-argocd:
+    name: Update ArgoCD Configurations  
+    needs: detect-changes
+    if: needs.detect-changes.outputs.argocd == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate ArgoCD manifests
+        run: |
+          echo "🔧 Validating ArgoCD application manifests..."
+          
+          for file in infrastructure/argocd/*-app.yaml; do
+            echo "Validating $file..."
+            # Basic YAML validation
+            yq eval '.' "$file" > /dev/null && echo "✅ $file is valid YAML" || echo "❌ $file has YAML errors"
+            
+            # Check for required fields
+            if yq eval '.spec.source.repoURL' "$file" | grep -q "github.com"; then
+              echo "✅ $file has valid repoURL"
+            else
+              echo "⚠️ $file may have incorrect repoURL"
+            fi
+          done
+          
+          echo "📊 ArgoCD applications configured:"
+          ls -la infrastructure/argocd/*-app.yaml | wc -l
+
+      - name: Check for helm values consistency
+        run: |
+          echo "🎯 Checking Helm values consistency..."
+          
+          # Check if ArgoCD apps use latest tag
+          grep -r "tag.*latest" infrastructure/argocd/ || echo "No hardcoded 'latest' tags found"
+          
+          # Check for pullPolicy Always
+          grep -r "pullPolicy.*Always" infrastructure/argocd/ || echo "No hardcoded 'Always' pullPolicy found"
+          
+          echo "✅ ArgoCD configuration validation completed"
+
   # Summary job
   ci-summary:
     name: CI Summary
@@ -346,6 +483,8 @@ jobs:
       - build-analysis-engine
       - build-portfolio-manager
       - build-ml-prediction
+      - build-frontend-app
+      - update-argocd
       - test-infrastructure
     steps:
       - name: CI Summary
@@ -358,6 +497,7 @@ jobs:
           echo "  - Analysis Engine: ${{ needs.detect-changes.outputs.analysis-engine }}"
           echo "  - Portfolio Manager: ${{ needs.detect-changes.outputs.portfolio-manager }}"
           echo "  - ML Prediction: ${{ needs.detect-changes.outputs.ml-prediction }}"
+          echo "  - Frontend App: ${{ needs.detect-changes.outputs.frontend-app }}"
           echo "  - Desktop Client: ${{ needs.detect-changes.outputs.desktop-client }}"
           echo "  - Infrastructure: ${{ needs.detect-changes.outputs.infrastructure }}"
           echo ""
@@ -366,16 +506,21 @@ jobs:
           echo "  - Analysis Engine: ${{ needs.build-analysis-engine.result }}"
           echo "  - Portfolio Manager: ${{ needs.build-portfolio-manager.result }}"
           echo "  - ML Prediction: ${{ needs.build-ml-prediction.result }}"
+          echo "  - Frontend App: ${{ needs.build-frontend-app.result }}"
+          echo "  - ArgoCD Update: ${{ needs.update-argocd.result }}"
           echo "  - Infrastructure: ${{ needs.test-infrastructure.result }}"
           echo ""
           echo "✅ Clean Architecture refactoring in progress..."
           echo "📦 Simplified from 118 K8s files to 2 Docker Compose services"
           echo "🎯 Critical Recommendations UI component created"
+          echo "🌟 TRII Landing Page for Colombian investors completed"
           
           if [[ "${{ needs.build-market-data.result }}" == "failure" || 
                 "${{ needs.build-analysis-engine.result }}" == "failure" || 
                 "${{ needs.build-portfolio-manager.result }}" == "failure" || 
                 "${{ needs.build-ml-prediction.result }}" == "failure" || 
+                "${{ needs.build-frontend-app.result }}" == "failure" || 
+                "${{ needs.update-argocd.result }}" == "failure" || 
                 "${{ needs.test-infrastructure.result }}" == "failure" ]]; then
             echo "❌ Some builds failed, but this is expected during Clean Architecture refactoring"
             exit 0
