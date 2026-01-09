@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "allowJs": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Paths */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@shared/*": ["../shared/*"],
+      "@components/*": ["./components/*"],
+      "@features/*": ["./features/*"],
+      "@hooks/*": ["./hooks/*"],
+      "@services/*": ["./services/*"],
+      "@store/*": ["./store/*"],
+      "@types/*": ["./types/*"],
+      "@utils/*": ["./utils/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../shared/**/*.ts",
+    "../shared/**/*.tsx"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
