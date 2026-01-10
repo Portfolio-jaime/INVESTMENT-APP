@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     path: infrastructure/helm/market-data
     targetRevision: HEAD
     helm:

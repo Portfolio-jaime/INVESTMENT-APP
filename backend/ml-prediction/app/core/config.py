@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # Service URLs
     MARKET_DATA_SERVICE_URL: str = "http://market-data:8001"
     ANALYSIS_ENGINE_URL: str = "http://analysis-engine:8002"
-    PORTFOLIO_MANAGER_URL: str = "http://portfolio-manager:8005"
+    PORTFOLIO_MANAGER_URL: str = "http://portfolio-manager:8003"
 
     # CORS
     CORS_ORIGINS: List[str] = [

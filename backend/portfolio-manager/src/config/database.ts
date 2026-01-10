@@ -4,7 +4,7 @@ const poolConfig: PoolConfig = {
   host: process.env.DB_HOST || 'postgres-service',
   port: parseInt(process.env.DB_PORT || '5432'),
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'trii_dev',
   max: 20,
   idleTimeoutMillis: 30000,

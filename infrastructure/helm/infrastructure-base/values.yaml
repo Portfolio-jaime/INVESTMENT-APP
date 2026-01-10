@@ -4,10 +4,10 @@ replicaCount: 1
 # PostgreSQL Configuration
 postgresql:
   enabled: true
-  image: postgres:15-alpine
-  database: trii_db
-  username: trii_user
-  password: trii_password
+  image: timescale/timescaledb:latest-pg15
+  database: trii_dev
+  username: postgres
+  password: postgres
   port: 5432
   resources:
     limits:
