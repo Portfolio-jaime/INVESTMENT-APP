@@ -17,11 +17,11 @@ spec:
           pullPolicy: Always
         resources:
           limits:
-            cpu: 200m
-            memory: 512Mi
+            cpu: 1000m
+            memory: 1Gi
           requests:
-            cpu: 100m
-            memory: 256Mi
+            cpu: 500m
+            memory: 512Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: trii-platform
