@@ -32,8 +32,13 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
   hosts:
     - host: trii-frontend.local
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: localhost
       paths:
         - path: /
           pathType: Prefix

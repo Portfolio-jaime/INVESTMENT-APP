@@ -8,20 +8,20 @@ image:
 
 service:
   type: ClusterIP
-  port: 80
-  targetPort: 80
+  port: 8002
+  targetPort: 8002
 
 resources:
   limits:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 1000m
+    memory: 1Gi
   requests:
-    cpu: 50m
-    memory: 64Mi
+    cpu: 500m
+    memory: 512Mi
 
 config:
   colombianMarkets: true
-  apiPort: 8000
+  apiPort: 8002
   redisHost: redis-service
   timescaleHost: timescale-service
 
