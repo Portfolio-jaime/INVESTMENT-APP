@@ -1,6 +1,6 @@
 """Broker API endpoints."""
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from typing import List
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -18,6 +18,7 @@ limiter = Limiter(key_func=get_remote_address)
 @router.get("/brokers/{broker_name}/quotes/{symbol}", response_model=QuoteResponse)
 @limiter.limit("30/minute")  # Stricter limit for broker data
 async def get_broker_quote(
+    request: Request,
     broker_name: str,
     symbol: str
 ):
@@ -55,6 +56,7 @@ async def get_broker_quote(
 @router.get("/brokers/{broker_name}/quotes/{symbol}/historical", response_model=List[HistoricalPriceResponse])
 @limiter.limit("20/minute")
 async def get_broker_historical_data(
+    request: Request,
     broker_name: str,
     symbol: str,
     timeframe: str = Query("daily", regex="^(daily|weekly|monthly)$"),

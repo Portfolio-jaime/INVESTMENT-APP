@@ -1,6 +1,6 @@
 """Currency conversion API endpoints."""
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from datetime import date
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -18,6 +18,7 @@ limiter = Limiter(key_func=get_remote_address)
 @router.get("/currency/rate", response_model=float)
 @limiter.limit("50/minute")
 async def get_exchange_rate(
+    request: Request,
     from_currency: str = Query(..., max_length=3),
     to_currency: str = Query(..., max_length=3),
     date_param: date = Query(None, alias="date")
@@ -41,6 +42,7 @@ async def get_exchange_rate(
 @router.get("/currency/convert", response_model=float)
 @limiter.limit("50/minute")
 async def convert_currency(
+    request: Request,
     amount: float = Query(..., gt=0),
     from_currency: str = Query(..., max_length=3),
     to_currency: str = Query(..., max_length=3),
@@ -65,7 +67,10 @@ async def convert_currency(
 
 @router.get("/currency/trm", response_model=CurrencyRate)
 @limiter.limit("30/minute")
-async def get_trm_rate(date_param: date = Query(None, alias="date")):
+async def get_trm_rate(
+    request: Request,
+    date_param: date = Query(None, alias="date")
+):
     """Get TRM (USD/COP) rate from Banco de la República."""
     from app.services.trm import trm_client
 
