@@ -15,9 +15,9 @@ spec:
       values: |
         postgresql:
           enabled: true
-          database: trii_dev
-          username: postgres
-          password: postgres
+          database: trii_db
+          username: trii_user
+          password: trii_password
           resources:
             limits:
               cpu: 500m
