@@ -32,11 +32,20 @@ spec:
             - name: DB_PORT
               value: "{{ .Values.config.database.port }}"
             - name: DB_USER
-              value: "{{ .Values.config.database.user }}"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
             - name: DB_PASSWORD
-              value: "{{ .Values.config.database.password }}"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
             - name: DB_NAME
-              value: "{{ .Values.config.database.name }}"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: database
             - name: REDIS_HOST
               value: "{{ .Values.config.redis.host }}"
             - name: REDIS_PORT
