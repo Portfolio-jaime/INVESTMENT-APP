@@ -24,6 +24,16 @@ config:
   apiPort: 8001
   redisHost: redis-service
   timescaleHost: postgres-service
+  database:
+    host: postgres-service
+    port: 5432
+    name: trii
+    user: postgres
+    password: postgres
+  redis:
+    host: redis-service
+    port: 6379
+    db: 0
 
 ingress:
   enabled: false

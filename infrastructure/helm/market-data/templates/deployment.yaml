@@ -28,9 +28,21 @@ spec:
             - name: API_PORT
               value: "{{ .Values.config.apiPort }}"
             - name: DB_HOST
-              value: "{{ .Values.config.timescaleHost }}"
+              value: "{{ .Values.config.database.host }}"
+            - name: DB_PORT
+              value: "{{ .Values.config.database.port }}"
+            - name: DB_USER
+              value: "{{ .Values.config.database.user }}"
+            - name: DB_PASSWORD
+              value: "{{ .Values.config.database.password }}"
+            - name: DB_NAME
+              value: "{{ .Values.config.database.name }}"
             - name: REDIS_HOST
-              value: "{{ .Values.config.redisHost }}"
+              value: "{{ .Values.config.redis.host }}"
+            - name: REDIS_PORT
+              value: "{{ .Values.config.redis.port }}"
+            - name: REDIS_DB
+              value: "{{ .Values.config.redis.db }}"
             - name: TIMESCALE_HOST
               value: "{{ .Values.config.timescaleHost }}"
           resources:
