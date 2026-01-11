@@ -12,7 +12,9 @@ RUN cd app/frontend && npm ci
 
 # Copy source code
 COPY app/frontend/ ./app/frontend/
-COPY app/shared/ ./app/shared/
+
+# Copy shared utilities if they exist (currently empty directory)
+# COPY app/shared/ ./app/shared/
 
 # Build the React application
 RUN cd app/frontend && npm run build

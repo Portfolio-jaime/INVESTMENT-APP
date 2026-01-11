@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "market-data.fullname" . }}-config
+  name: {{ include "analysis-engine.fullname" . }}-config
   labels:
-    {{- include "market-data.labels" . | nindent 4 }}
+    {{- include "analysis-engine.labels" . | nindent 4 }}
 data:
   COLOMBIAN_MARKETS: "{{ .Values.config.colombianMarkets }}"
   API_PORT: "{{ .Values.config.apiPort }}"

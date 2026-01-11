@@ -42,7 +42,7 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/component: {{ .Values.labels.component }}
 app.kubernetes.io/tier: {{ .Values.labels.tier }}
-app.kubernetes.io/part-of: {{ .Values.labels."app.kubernetes.io/part-of" }}
+app.kubernetes.io/part-of: {{ index .Values.labels "app.kubernetes.io/part-of" }}
 {{- end }}
 
 {{/*
