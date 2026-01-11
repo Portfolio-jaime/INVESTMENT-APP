@@ -341,7 +341,7 @@ jobs:
       - name: Test database initialization
         run: |
           # Start services
-          cp infrastructure/docker/docker-compose.yml .
+          cp infrastructure/docker/docker-compose.test.yml ./docker-compose.yml
           docker compose up -d
           
           # Wait for PostgreSQL to be ready
@@ -355,6 +355,9 @@ jobs:
           
           # Test Redis connection
           docker exec trii-redis redis-cli ping
+          
+          # Test RabbitMQ connection
+          docker exec trii-rabbitmq rabbitmqctl status
           
           # Cleanup
           docker compose down
