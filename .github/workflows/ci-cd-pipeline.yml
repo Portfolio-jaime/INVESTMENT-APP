@@ -347,8 +347,11 @@ jobs:
           # Wait for PostgreSQL to be ready
           sleep 30
           
+          # Initialize database schema
+          docker exec -i trii-postgres psql -U postgres -d trii < scripts/database/init_db.sql
+          
           # Test database connection
-          docker exec trii-postgres psql -U postgres -d trii -c "SELECT COUNT(*) FROM portfolio.portfolios;"
+          docker exec trii-postgres psql -U postgres -d trii -c "SELECT COUNT(*) FROM portfolios;"
           
           # Test Redis connection
           docker exec trii-redis redis-cli ping

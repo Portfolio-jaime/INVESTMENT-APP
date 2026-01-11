@@ -1,14 +1,13 @@
-version: '3.8'
-
 # Docker Compose configuration for local development
 # This file is used for CI/CD validation of infrastructure components
 
 services:
   # PostgreSQL Database
   postgres:
+    container_name: trii-postgres
     image: postgres:15
     environment:
-      POSTGRES_DB: trii_dev
+      POSTGRES_DB: trii
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -23,6 +22,7 @@ services:
 
   # Redis Cache
   redis:
+    container_name: trii-redis
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -34,6 +34,7 @@ services:
 
   # RabbitMQ Message Broker
   rabbitmq:
+    container_name: trii-rabbitmq
     image: rabbitmq:3-management-alpine
     environment:
       RABBITMQ_DEFAULT_USER: rabbitmq
@@ -49,13 +50,14 @@ services:
 
   # Market Data Service
   market-data:
-    image: ${REGISTRY}/jaimehenao8126/trii-market-data:${IMAGE_TAG:-latest}
+    container_name: trii-market-data
+    image: jaimehenao8126/trii-market-data:latest
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: trii_dev
+      DB_NAME: trii
       REDIS_HOST: redis
       REDIS_PORT: 6379
       RABBITMQ_HOST: rabbitmq
@@ -74,13 +76,14 @@ services:
 
   # Analysis Engine Service
   analysis-engine:
-    image: ${REGISTRY}/jaimehenao8126/trii-analysis-engine:${IMAGE_TAG:-latest}
+    container_name: trii-analysis-engine
+    image: jaimehenao8126/trii-analysis-engine:latest
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: trii_dev
+      DB_NAME: trii
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
@@ -96,13 +99,14 @@ services:
 
   # Portfolio Manager Service
   portfolio-manager:
-    image: ${REGISTRY}/jaimehenao8126/trii-portfolio-manager:${IMAGE_TAG:-latest}
+    container_name: trii-portfolio-manager
+    image: jaimehenao8126/trii-portfolio-manager:latest
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: trii_dev
+      DB_NAME: trii
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
@@ -118,13 +122,14 @@ services:
 
   # ML Prediction Service
   ml-prediction:
-    image: ${REGISTRY}/jaimehenao8126/trii-ml-prediction:${IMAGE_TAG:-latest}
+    container_name: trii-ml-prediction
+    image: jaimehenao8126/trii-ml-prediction:latest
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: trii_dev
+      DB_NAME: trii
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
