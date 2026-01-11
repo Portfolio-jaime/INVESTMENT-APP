@@ -1,0 +1,91 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: monitoring-stack
+    app.kubernetes.io/part-of: trii-platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: trii
+  source:
+    repoURL: https://github.com/trii-platform/trii-platform.git
+    targetRevision: main
+    path: infrastructure/helm/monitoring-stack
+    helm:
+      valueFiles:
+        - values-production.yaml
+      parameters:
+        - name: grafana.adminPassword
+          value: $ARGOCD_APP_PARAMETERS_GRAFANA_PASSWORD
+        - name: prometheus.server.persistentVolume.storageClass
+          value: premium-ssd
+        - name: grafana.persistence.storageClassName
+          value: premium-ssd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trii-monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    managedFieldsManagers:
+    - kube-controller-manager
+  - group: ""
+    kind: Secret
+    name: grafana-admin-credentials
+    jsonPointers:
+    - /data
+  - group: ""
+    kind: ConfigMap
+    managedFieldsManagers:
+    - kubectl-client-side-apply
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: business-dashboards
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: business-dashboards
+    app.kubernetes.io/part-of: monitoring-stack
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: trii
+  source:
+    repoURL: https://github.com/trii-platform/trii-platform.git
+    targetRevision: main
+    path: infrastructure/k8s-manifests/monitoring
+    directory:
+      recurse: true
+      include: "business-dashboards.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trii-monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  revisionHistoryLimit: 5

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle, Home } from 'lucide-react';
 import Dashboard from './components/Dashboard';
+import ModernDashboard from './components/ModernDashboard';
 import Watchlist from './components/Watchlist';
 import PortfolioView from './components/PortfolioView';
 import SetupWizard from './components/SetupWizard/SetupWizard';
 import LandingPage from './components/LandingPage';
+import ModernLandingPage from './components/ModernLandingPage';
 
 interface Notification {
   id: string;
@@ -197,8 +199,8 @@ const App: React.FC = () => {
 
             {/* Content */}
             <div className="space-y-6">
-              {activeTab === 'landing' && <LandingPage />}
-              {activeTab === 'dashboard' && <Dashboard addNotification={addNotification} />}
+              {activeTab === 'landing' && <ModernLandingPage />}
+              {activeTab === 'dashboard' && <ModernDashboard />}
               {activeTab === 'watchlist' && <Watchlist addNotification={addNotification} />}
               {activeTab === 'portfolio' && <PortfolioView addNotification={addNotification} />}
             </div>

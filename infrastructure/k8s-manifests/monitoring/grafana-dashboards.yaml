@@ -1,0 +1,278 @@
+# TRII Platform Dashboard for Grafana
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: trii-monitoring
+data:
+  trii-platform-overview.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "TRII Platform Overview",
+        "tags": ["trii", "platform", "overview"],
+        "style": "dark",
+        "timezone": "browser",
+        "refresh": "30s",
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Service Health Status",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{job=~\"trii-.*\"}",
+                "legendFormat": "{{ job }}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "green", "value": 1}
+                  ]
+                },
+                "mappings": [
+                  {"type": "value", "value": "0", "text": "DOWN"},
+                  {"type": "value", "value": "1", "text": "UP"}
+                ]
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Request Rate (req/sec)",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])",
+                "legendFormat": "{{ service }}"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "Requests/sec",
+                "min": 0
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Response Time (ms)",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]) * 1000)",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]) * 1000)",
+                "legendFormat": "50th percentile"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "Milliseconds",
+                "min": 0
+              }
+            ],
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+          },
+          {
+            "id": 4,
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{pod=~\"trii-.*\"} / 1024 / 1024",
+                "legendFormat": "{{ pod }}"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "MB",
+                "min": 0
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+          },
+          {
+            "id": 5,
+            "title": "CPU Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{pod=~\"trii-.*\"}[5m]) * 100",
+                "legendFormat": "{{ pod }}"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "Percentage",
+                "min": 0,
+                "max": 100
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+          },
+          {
+            "id": 6,
+            "title": "Active Trading Sessions",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "trii_active_sessions_total",
+                "legendFormat": "Sessions"
+              }
+            ],
+            "valueName": "current",
+            "colorBackground": true,
+            "thresholds": "10,50",
+            "colors": ["rgba(50, 172, 45, 0.97)", "rgba(237, 129, 40, 0.89)", "rgba(245, 54, 54, 0.9)"],
+            "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24}
+          },
+          {
+            "id": 7,
+            "title": "Portfolio Value (USD)",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "trii_total_portfolio_value_usd",
+                "legendFormat": "Value"
+              }
+            ],
+            "valueName": "current",
+            "format": "currencyUSD",
+            "colorBackground": false,
+            "gridPos": {"h": 4, "w": 6, "x": 6, "y": 24}
+          },
+          {
+            "id": 8,
+            "title": "ML Predictions Accuracy",
+            "type": "gauge",
+            "targets": [
+              {
+                "expr": "trii_ml_prediction_accuracy_percent",
+                "legendFormat": "Accuracy"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "min": 0,
+                "max": 100,
+                "unit": "percent",
+                "thresholds": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "yellow", "value": 70},
+                    {"color": "green", "value": 85}
+                  ]
+                }
+              }
+            },
+            "gridPos": {"h": 4, "w": 6, "x": 12, "y": 24}
+          },
+          {
+            "id": 9,
+            "title": "Database Connections",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "postgres_stat_activity_count",
+                "legendFormat": "Connections"
+              }
+            ],
+            "valueName": "current",
+            "colorBackground": true,
+            "thresholds": "50,80",
+            "colors": ["rgba(50, 172, 45, 0.97)", "rgba(237, 129, 40, 0.89)", "rgba(245, 54, 54, 0.9)"],
+            "gridPos": {"h": 4, "w": 6, "x": 18, "y": 24}
+          }
+        ]
+      }
+    }
+  
+  trii-infrastructure.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "TRII Infrastructure Metrics",
+        "tags": ["trii", "infrastructure", "kubernetes"],
+        "style": "dark",
+        "timezone": "browser",
+        "refresh": "30s",
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Cluster Resource Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "100 * (1 - avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+                "legendFormat": "CPU Usage %"
+              },
+              {
+                "expr": "100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))",
+                "legendFormat": "Memory Usage %"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "Percentage",
+                "min": 0,
+                "max": 100
+              }
+            ],
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Pod Status Distribution",
+            "type": "piechart",
+            "targets": [
+              {
+                "expr": "count by (phase) (kube_pod_status_phase{namespace=\"trii-platform\"})",
+                "legendFormat": "{{ phase }}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+          },
+          {
+            "id": 3,
+            "title": "Network I/O",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(container_network_receive_bytes_total{pod=~\"trii-.*\"}[5m]) * 8",
+                "legendFormat": "{{ pod }} - Inbound"
+              },
+              {
+                "expr": "rate(container_network_transmit_bytes_total{pod=~\"trii-.*\"}[5m]) * 8",
+                "legendFormat": "{{ pod }} - Outbound"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "bits/sec",
+                "min": 0
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+          }
+        ]
+      }
+    }
