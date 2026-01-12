@@ -1,7 +1,7 @@
 {
   "name": "@trii/portfolio-manager",
-  "version": "1.0.0",
-  "description": "Portfolio management microservice for TRII Investment Platform",
+  "version": "2.1.0",
+  "description": "Advanced portfolio management microservice with AI-driven optimization for TRII Investment Platform",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",

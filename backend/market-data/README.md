@@ -1,16 +1,20 @@
-# Market Data Service
+# Market Data Service v2.1
 
 Microservicio de ingestión y distribución de datos de mercado para TRII Investment Platform.
+Ahora con capacidades mejoradas de procesamiento en tiempo real y análisis avanzado.
 
 ## 🎯 Funcionalidades
 
-- ✅ Cotizaciones en tiempo real
-- ✅ Datos históricos (OHLCV)
-- ✅ Búsqueda de símbolos
-- ✅ Cache con Redis
-- ✅ Rate limiting
-- ✅ Health checks
-- ✅ Métricas Prometheus
+- ✅ Cotizaciones en tiempo real con WebSockets
+- ✅ Datos históricos (OHLCV) con mejor compresión
+- ✅ Búsqueda de símbolos con autocompletado inteligente
+- ✅ Cache con Redis y TTL optimizado
+- ✅ Rate limiting adaptativo por usuario
+- ✅ Health checks avanzados con métricas detalladas
+- ✅ Métricas Prometheus con dashboards personalizados
+- 🆕 Análisis de sentimiento de mercado
+- 🆕 Detección de anomalías en precios
+- 🆕 Soporte para criptomonedas
 
 ## 🚀 Inicio Rápido
 
