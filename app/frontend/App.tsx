@@ -7,6 +7,7 @@ import PortfolioView from './components/PortfolioView';
 import SetupWizard from './components/SetupWizard/SetupWizard';
 import LandingPage from './components/LandingPage';
 import ModernLandingPage from './components/ModernLandingPage';
+import TriiLandingPage from './components/TriiLandingPage';
 
 interface Notification {
   id: string;
@@ -199,7 +200,7 @@ const App: React.FC = () => {
 
             {/* Content */}
             <div className="space-y-6">
-              {activeTab === 'landing' && <ModernLandingPage />}
+              {activeTab === 'landing' && <TriiLandingPage />}
               {activeTab === 'dashboard' && <ModernDashboard />}
               {activeTab === 'watchlist' && <Watchlist addNotification={addNotification} />}
               {activeTab === 'portfolio' && <PortfolioView addNotification={addNotification} />}
