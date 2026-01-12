@@ -512,7 +512,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -572,14 +572,14 @@ jobs:
 
       # Build and push Docker image for deployment
       - name: Login to Docker Hub
-        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_PASSWORD != ''
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker image (without push)
-        if: env.DOCKERHUB_USERNAME == '' || env.DOCKERHUB_PASSWORD == ''
+        if: env.DOCKERHUB_USERNAME == '' || env.DOCKERHUB_TOKEN == ''
         run: |
           echo "⚠️ Docker secrets not configured - building image locally only"
           SHORT_SHA=${GITHUB_SHA:0:8}
@@ -591,7 +591,7 @@ jobs:
         run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
 
       - name: Build and push frontend Docker image
-        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_PASSWORD != ''
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -604,7 +604,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_PASSWORD != ''
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         run: |
           SHORT_SHA=${GITHUB_SHA:0:8}
           sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" infrastructure/helm/frontend-app/values.yaml
