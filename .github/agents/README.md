@@ -6,27 +6,29 @@ The TRII Investment Platform uses a specialized agent ecosystem to handle differ
 ## Agent Architecture
 
 ```
-┌─────────────────────┐
-│  orchestrator.agent │  ←── Master Coordinator
-└──────────┬──────────┘
-           │
-           ├── npm.agent           (Package Management)
-           ├── docker.agent        (Containerization)
-           ├── database.agent      (Data Operations)
-           ├── testing.agent       (Quality Assurance)
-           ├── ml-ai.agent         (Machine Learning)
-           ├── infrastructure.agent (DevOps & Deployment)
-           └── monitoring.agent    (Observability)
+┌─────────────────────────────────────┐
+│     orchestrator.agent              │  ←── Master Coordinator with Terminal Access
+└──────────────┬──────────────────────┘
+               │
+               ├── npm.agent           (Advanced Monorepo Management)
+               ├── docker.agent        (Container Orchestration & Security)
+               ├── frontend.agent      (Elite UX/UI & Performance Ninja)
+               ├── documentation.agent (Living Documentation & Technical Writing)
+               ├── database.agent      (PostgreSQL & Financial Data)
+               ├── testing.agent       (Comprehensive QA & Security)
+               ├── ml-ai.agent         (MLOps & AI-driven Analysis)
+               ├── infrastructure.agent (GitOps & Cloud Infrastructure)
+               └── monitoring.agent    (Advanced Observability)
 ```
 
 ## Specialized Agents
 
 ### 🎯 [orchestrator.agent.md](orchestrator.agent.md)
-**Master Coordinator** - Orchestrates complex multi-domain operations
-- Delegates tasks to specialized agents
-- Manages workflow dependencies
-- Coordinates cross-domain troubleshooting
-- Handles end-to-end feature development
+**Master Coordinator with Terminal Access** - Orchestrates complex multi-domain operations
+- Coordinates across all specialized agents with direct system access
+- Manages complex workflow dependencies and task orchestration
+- Handles emergency operations with real-time terminal capabilities
+- Provides end-to-end feature development with quality assurance
 
 ### 📦 [npm.agent.md](npm.agent.md)
 **Package Management** - NPM/PNPM and workspace operations
@@ -34,6 +36,22 @@ The TRII Investment Platform uses a specialized agent ecosystem to handle differ
 - Workspace configuration
 - Script execution and build operations
 - Version management and conflict resolution
+
+### 🎨 [frontend.agent.md](frontend.agent.md)
+**Frontend Development Ninja** - Elite React/TypeScript, UX/UI, and SEO expert
+- Advanced React/TypeScript patterns and optimization
+- Financial UX/UI design and data visualization
+- SEO optimization and Core Web Vitals
+- Performance engineering and accessibility
+- Trading interfaces and portfolio dashboards
+
+### 📝 [documentation.agent.md](documentation.agent.md)
+**Technical Documentation** - Living documentation and knowledge management
+- API documentation and technical specifications
+- User guides and developer documentation
+- Architecture diagrams and system documentation
+- Compliance and regulatory documentation
+- Automated documentation generation and maintenance
 
 ### 🐳 [docker.agent.md](docker.agent.md)
 **Containerization** - Docker and container orchestration
@@ -84,6 +102,8 @@ For single-domain tasks, interact directly with the specialized agent:
 
 ```
 "npm.agent: Install lodash in the portfolio-manager service"
+"frontend.agent: Create a responsive trading dashboard with advanced charts"
+"documentation.agent: Generate API documentation for the portfolio service"
 "docker.agent: Build and run the market-data service"
 "database.agent: Create an index on the portfolio_positions table"
 ```
@@ -102,6 +122,8 @@ For complex multi-domain tasks, use the orchestrator:
 | Task Type | Recommended Agent | Example |
 |-----------|-------------------|---------|
 | Package management | npm.agent | "Update all dependencies to latest versions" |
+| Frontend development | frontend.agent | "Create responsive trading interface with real-time charts" |
+| Documentation | documentation.agent | "Generate API docs with interactive examples" |
 | Container issues | docker.agent | "Fix networking between services" |
 | Database operations | database.agent | "Optimize slow queries in portfolio analysis" |
 | Code quality | testing.agent | "Add E2E tests for new trading workflow" |
@@ -136,7 +158,8 @@ For complex multi-domain tasks, use the orchestrator:
 
 ### Applications
 - **desktop-client**: Electron-based desktop application
-- **web-client**: Future web interface
+- **web-client**: Modern React/TypeScript web interface with advanced UX/UI
+- **mobile-client**: Future mobile trading application
 
 ### Core Services
 - **market-data**: Real-time market data processing
@@ -155,10 +178,12 @@ For complex multi-domain tasks, use the orchestrator:
 
 ## Getting Started
 
-1. **For new features**: Start with `orchestrator.agent`
-2. **For specific technical issues**: Use the relevant specialized agent
-3. **For maintenance tasks**: Use `orchestrator.agent` for complex operations, direct agents for simple ones
-4. **For monitoring**: Use `monitoring.agent` to track system health and performance
+1. **For frontend development**: Use `frontend.agent` for React/TypeScript, UX/UI, and performance optimization
+2. **For documentation needs**: Use `documentation.agent` for technical writing and living documentation
+3. **For new features**: Start with `orchestrator.agent` for complex multi-domain operations
+4. **For specific technical issues**: Use the relevant specialized agent
+5. **For maintenance tasks**: Use `orchestrator.agent` for complex operations, direct agents for simple ones
+6. **For monitoring**: Use `monitoring.agent` to track system health and performance
 
 ## Agent Coordination
 
@@ -167,5 +192,7 @@ The agents are designed to work together seamlessly:
 - **Shared context**: Important information is shared between relevant agents
 - **Conflict avoidance**: Each agent has clear boundaries and responsibilities
 - **Quality assurance**: The orchestrator ensures all requirements are met
+- **Documentation flow**: Documentation agent works with all others to maintain living docs
+- **Frontend integration**: Frontend agent coordinates with backend teams for seamless user experiences
 
-This ecosystem provides comprehensive coverage of all technical aspects of the TRII Investment Platform while maintaining expertise and efficiency in each domain.
+This enhanced ecosystem with 9 specialized agents provides comprehensive coverage of all technical aspects of the TRII Investment Platform, from elite frontend development to robust documentation, while maintaining expertise and efficiency in each domain.

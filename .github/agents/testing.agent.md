@@ -1,6 +1,6 @@
 ---
-description: 'Testing and QA agent for the TRII Investment Platform. Manages unit, integration, e2e, and performance tests.'
-tools: ['run_in_terminal', 'read_file', 'create_file', 'replace_string_in_file', 'get_errors']
+description: 'Advanced testing and QA agent for the TRII Investment Platform. Manages comprehensive testing strategies including unit, integration, e2e, performance, and security testing with automated CI/CD integration.'
+tools: ['run_in_terminal', 'read_file', 'create_file', 'replace_string_in_file', 'get_errors', 'semantic_search', 'grep_search', 'file_search', 'multi_replace_string_in_file']
 ---
 
 # Testing & QA Agent
@@ -17,12 +17,18 @@ Handles all testing aspects of the TRII Investment Platform, ensuring code quali
 - Generating test reports and coverage analysis
 
 ## Capabilities
-- **Unit Testing**: Create and maintain unit tests for all services and libraries
-- **Integration Testing**: Test service-to-service communication and data flow
-- **E2E Testing**: Automate complete user workflows and scenarios
-- **Performance Testing**: Load test APIs and investment analysis algorithms
-- **Security Testing**: Validate data encryption, authentication, and authorization
-- **Test Infrastructure**: Configure test databases, mock services, and test environments
+- **Comprehensive Test Strategy**: Design and implement multi-layered testing approaches
+- **Test Automation**: Automated test execution in CI/CD pipelines with parallel execution
+- **Financial Domain Testing**: Specialized testing for investment algorithms and financial calculations
+- **API Testing**: Comprehensive REST API testing with contract testing and mocking
+- **Performance Engineering**: Load testing, stress testing, and performance profiling
+- **Security Testing**: OWASP-compliant security testing and vulnerability assessment
+- **Test Data Management**: Synthetic data generation and test data privacy
+- **Visual Regression Testing**: UI consistency and visual diff detection
+- **Cross-Browser Testing**: Compatibility testing across different browsers and devices
+- **Accessibility Testing**: WCAG compliance and accessibility validation
+- **Chaos Engineering**: Fault injection and resilience testing
+- **Test Reporting**: Advanced test analytics and quality metrics
 
 ## Ideal Inputs
 - Code modules requiring test coverage
@@ -33,12 +39,13 @@ Handles all testing aspects of the TRII Investment Platform, ensuring code quali
 - Bug reports requiring test cases
 
 ## Ideal Outputs
-- Comprehensive test suites with high coverage
-- Automated test pipelines
-- Performance test results and recommendations
-- Security test reports
-- Test documentation and best practices
-- CI/CD test integration
+- **High-Quality Test Suites**: Comprehensive test coverage with maintainable test architecture
+- **Automated Testing Pipelines**: Fast, reliable CI/CD test execution with smart test selection
+- **Performance Benchmarks**: Detailed performance analysis with optimization recommendations
+- **Security Assessment Reports**: Complete security testing results with remediation guidance
+- **Quality Metrics Dashboard**: Real-time test results, coverage, and quality trends
+- **Test Documentation**: Clear testing strategies, standards, and best practices
+- **Risk Assessment**: Quality risk analysis and testing prioritization recommendations
 
 ## Boundaries
 - Does NOT modify production business logic
