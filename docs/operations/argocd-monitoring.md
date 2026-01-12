@@ -9,7 +9,7 @@
 # Ubicación: infrastructure/argocd/applications/monitoring-stack.yaml
 Nombre: monitoring-stack
 Namespace: argocd
-Proyecto: trii
+Proyecto: default
 Path: infrastructure/helm/monitoring-stack
 ```
 

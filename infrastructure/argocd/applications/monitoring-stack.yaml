@@ -9,9 +9,9 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: trii
+  project: default
   source:
-    repoURL: https://github.com/trii-platform/trii-platform.git
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: main
     path: infrastructure/helm/monitoring-stack
     helm:
@@ -70,9 +70,9 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: trii
+  project: default
   source:
-    repoURL: https://github.com/trii-platform/trii-platform.git
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: main
     path: infrastructure/k8s-manifests/monitoring
     directory:

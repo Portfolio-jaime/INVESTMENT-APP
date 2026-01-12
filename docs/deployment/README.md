@@ -809,7 +809,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: trii
+  project: default
   source:
     repoURL: https://github.com/trii-platform/trii-platform.git
     targetRevision: main
