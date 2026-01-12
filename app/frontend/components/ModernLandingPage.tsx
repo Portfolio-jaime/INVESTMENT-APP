@@ -86,6 +86,25 @@ const ModernLandingPage: React.FC = () => {
     }
   ];
 
+  const stats = [
+    {
+      value: "$2.5M+",
+      label: "Inversiones gestionadas"
+    },
+    {
+      value: "15,000+",
+      label: "Usuarios activos"
+    },
+    {
+      value: "98%",
+      label: "Satisfacción del cliente"
+    },
+    {
+      value: "24/7",
+      label: "Soporte disponible"
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
       {/* Hero Section */}
