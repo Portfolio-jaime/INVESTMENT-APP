@@ -13,7 +13,7 @@ spec:
       values: |
         image:
           repository: jaimehenao8126/trii-portfolio-manager
-          tag: "latest"
+          tag: "replace-me-with-commit-hash"
           pullPolicy: Always
         resources:
           limits:

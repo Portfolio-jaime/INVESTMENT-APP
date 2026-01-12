@@ -1,9 +1,9 @@
 # Global configuration
 global:
-  # Container registry for custom images
-  imageRegistry: "trii-registry.azurecr.io"
+  # Container registry for custom images (disabled for local development)
+  # imageRegistry: "trii-registry.azurecr.io"
   # Storage class for persistent volumes
-  storageClass: "premium-ssd"
+  storageClass: "standard"
   # Domain for ingress
   domain: "trii.co"
   # Environment

@@ -1,4 +1,4 @@
-# Prometheus Alert Rules
+# Prometheus Alert Rules ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,104 +7,104 @@ metadata:
 data:
   trii-platform.yml: |
     groups:
-    - name: trii-platform
-      rules:
-      # Service availability
-      - alert: ServiceDown
-        expr: up == 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Service {{ $labels.job }} is down"
-          description: "Service {{ $labels.job }} has been down for more than 5 minutes."
-      
-      # High CPU usage
-      - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High CPU usage on {{ $labels.instance }}"
-          description: "CPU usage is above 80% for more than 5 minutes."
-      
-      # High memory usage
-      - alert: HighMemoryUsage
-        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High memory usage on {{ $labels.instance }}"
-          description: "Memory usage is above 85% for more than 5 minutes."
-      
-      # Pod crashes
-      - alert: PodCrashing
-        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} is crashing"
-          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently."
-      
-      # Database connection issues
-      - alert: DatabaseConnectionHigh
-        expr: postgres_stat_activity_count > 80
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High database connection count"
-          description: "PostgreSQL has more than 80 active connections."
-      
-      # ML Prediction Service Health
-      - alert: MLPredictionServiceDown
-        expr: up{job="trii-ml-prediction"} == 0
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "ML Prediction Service is down"
-          description: "The ML Prediction service has been unreachable for more than 2 minutes."
-      
-      # Analysis Engine Health
-      - alert: AnalysisEngineDown
-        expr: up{job="trii-analysis-engine"} == 0
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Analysis Engine is down"
-          description: "The Analysis Engine service has been unreachable for more than 2 minutes."
-      
-      # Market Data Service Health
-      - alert: MarketDataServiceDown
-        expr: up{job="trii-market-data"} == 0
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Market Data Service is down"
-          description: "The Market Data service has been unreachable for more than 2 minutes."
-      
-      # Frontend Health
-      - alert: FrontendDown
-        expr: up{job="trii-frontend"} == 0
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Frontend is down"
-          description: "The Frontend service has been unreachable for more than 2 minutes."
-      
-      # Storage issues
-      - alert: HighDiskUsage
-        expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 > 85
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High disk usage on {{ $labels.instance }}"
-          description: "Disk usage is above 85% on device {{ $labels.device }}."
+      - name: trii-platform
+        rules:
+        # Service availability
+        - alert: ServiceDown
+          expr: up == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Service {{ $labels.job }} is down"
+            description: "Service {{ $labels.job }} has been down for more than 5 minutes."
+        
+        # High CPU usage
+        - alert: HighCPUUsage
+          expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage on {{ $labels.instance }}"
+            description: "CPU usage is above 80% for more than 5 minutes."
+        
+        # High memory usage
+        - alert: HighMemoryUsage
+          expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage on {{ $labels.instance }}"
+            description: "Memory usage is above 85% for more than 5 minutes."
+        
+        # Pod crashes
+        - alert: PodCrashing
+          expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crashing"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently."
+        
+        # Database connection issues
+        - alert: DatabaseConnectionHigh
+          expr: postgres_stat_activity_count > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High database connection count"
+            description: "PostgreSQL has more than 80 active connections."
+        
+        # ML Prediction Service Health
+        - alert: MLPredictionServiceDown
+          expr: up{job="trii-ml-prediction"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ML Prediction Service is down"
+            description: "The ML Prediction service has been unreachable for more than 2 minutes."
+        
+        # Analysis Engine Health
+        - alert: AnalysisEngineDown
+          expr: up{job="trii-analysis-engine"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Analysis Engine is down"
+            description: "The Analysis Engine service has been unreachable for more than 2 minutes."
+        
+        # Market Data Service Health
+        - alert: MarketDataServiceDown
+          expr: up{job="trii-market-data"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Market Data Service is down"
+            description: "The Market Data service has been unreachable for more than 2 minutes."
+        
+        # Frontend Health
+        - alert: FrontendDown
+          expr: up{job="trii-frontend"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Frontend is down"
+            description: "The Frontend service has been unreachable for more than 2 minutes."
+        
+        # Storage issues
+        - alert: HighDiskUsage
+          expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 > 85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High disk usage on {{ $labels.instance }}"
+            description: "Disk usage is above 85% on device {{ $labels.device }}."

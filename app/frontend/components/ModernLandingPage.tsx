@@ -11,33 +11,58 @@ import {
   CheckCircle,
   Play,
   Zap,
-  Globe
+  Globe,
+  Brain,
+  PieChart,
+  Target
 } from 'lucide-react';
 
 const ModernLandingPage: React.FC = () => {
   const features = [
     {
-      icon: <TrendingUp className="w-8 h-8" />,
-      title: "Inversiones Inteligentes",
-      description: "IA avanzada que analiza el mercado 24/7 para encontrar las mejores oportunidades de inversión."
+      icon: <Brain className="w-12 h-12 text-indigo-400" />,
+      title: "Invertir sin saber de finanzas",
+      description: "Te guiamos paso a paso. No necesitas ser experto, solo tener ganas de hacer crecer tu dinero de forma inteligente."
     },
     {
-      icon: <Shield className="w-8 h-8" />,
-      title: "100% Seguro",
-      description: "Tus inversiones están protegidas con los más altos estándares de seguridad bancaria."
+      icon: <Target className="w-12 h-12 text-indigo-400" />,
+      title: "Recomendaciones inteligentes",
+      description: "Nuestra IA analiza tu perfil y objetivos para sugerirte las mejores opciones de inversión personalizadas."
     },
     {
-      icon: <Smartphone className="w-8 h-8" />,
-      title: "Fácil de Usar",
-      description: "Interfaz simple e intuitiva. Invierte desde tu teléfono en menos de 3 minutos."
+      icon: <BarChart3 className="w-12 h-12 text-indigo-400" />,
+      title: "Datos claros y visuales",
+      description: "Olvídate de números complicados. Todo se explica con gráficos simples y ejemplos que cualquiera entiende."
+    },
+    {
+      icon: <DollarSign className="w-12 h-12 text-indigo-400" />,
+      title: "Inversión desde montos bajos",
+      description: "Comienza con tan solo $50.000 COP. No necesitas ser millonario para empezar a invertir y ver resultados."
     }
   ];
 
-  const stats = [
-    { value: "$2.5M+", label: "Invertidos" },
-    { value: "15,000+", label: "Usuarios" },
-    { value: "22%", label: "Retorno Promedio" },
-    { value: "4.9★", label: "Rating App Store" }
+  const inversiones = [
+    {
+      nombre: "Acciones Tecnológicas",
+      riesgo: "Alto",
+      rentabilidad: "18-25%",
+      recomendacion: "Buena opción a largo plazo",
+      color: "#EF4444"
+    },
+    {
+      nombre: "ETFs Diversificados", 
+      riesgo: "Medio",
+      rentabilidad: "8-12%",
+      recomendacion: "Ideal si estás empezando",
+      color: "#10B981"
+    },
+    {
+      nombre: "Fondos de Renta Fija",
+      riesgo: "Bajo",
+      rentabilidad: "5-7%",
+      recomendacion: "Perfecto para ser conservador",
+      color: "#3B82F6"
+    }
   ];
 
   const testimonials = [
