@@ -15,7 +15,7 @@ spec:
       values: |
         image:
           repository: jaimehenao8126/trii-frontend-app
-          tag: "replace-me-with-commit-hash"
+          tag: "94974117fd5bc7faef8481cad0a80afc99f946e9"
           pullPolicy: Always
         
         service:
