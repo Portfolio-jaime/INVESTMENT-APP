@@ -11,60 +11,7 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/helm/frontend-app
-    helm:
-      values: |
-        image:
-          repository: jaimehenao8126/trii-frontend-app
-          tag: "94974117fd5bc7faef8481cad0a80afc99f946e9"
-          pullPolicy: Always
-        
-        service:
-          type: ClusterIP
-          port: 3000
-          targetPort: 3000
-        
-        ingress:
-          enabled: true
-          className: "nginx"
-          annotations:
-            nginx.ingress.kubernetes.io/rewrite-target: /
-          hosts:
-            - host: trii-frontend.local
-              paths:
-                - path: /
-                  pathType: Prefix
-          tls: []
-        
-        resources:
-          limits:
-            cpu: 500m
-            memory: 512Mi
-          requests:
-            cpu: 250m
-            memory: 256Mi
-        
-        autoscaling:
-          enabled: false
-          minReplicas: 1
-          maxReplicas: 3
-          targetCPUUtilizationPercentage: 80
-        
-        # Landing Page specific configurations
-        landingPage:
-          enabled: true
-          features:
-            - name: "Educación Financiera"
-              description: "Aprende conceptos básicos de inversión"
-            - name: "Análisis de Mercado"  
-              description: "Herramientas de análisis técnico y fundamental"
-            - name: "Portafolio Inteligente"
-              description: "Gestión automatizada de inversiones"
-            - name: "Soporte 24/7"
-              description: "Atención personalizada para colombianos"
-  
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: trii-platform
+
   
   syncPolicy:
     automated:
