@@ -603,6 +603,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Update Helm values
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_PASSWORD != ''
+        run: |
+          SHORT_SHA=${GITHUB_SHA:0:8}
+          sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" infrastructure/helm/frontend-app/values.yaml
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add infrastructure/helm/frontend-app/values.yaml
+          git commit -m "Update frontend-app image tag to $SHORT_SHA [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed, keeping previous image tag"
+          git checkout HEAD -- infrastructure/helm/frontend-app/values.yaml
+
   # Update ArgoCD configurations
   update-argocd:
     name: Update ArgoCD Configurations  
