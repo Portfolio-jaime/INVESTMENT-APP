@@ -4,7 +4,7 @@ replicaCount: 1
 image:
   repository: jaimehenao8126/trii-frontend-app
   pullPolicy: Always
-  tag: "d8e0790"  # Updated for ArgoCD sync
+  tag: "9497411"  # Use existing image from TypeScript fix commit
 
 imagePullSecrets: []
 nameOverride: ""
