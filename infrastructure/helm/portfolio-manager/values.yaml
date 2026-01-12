@@ -3,7 +3,7 @@ replicaCount: 1
 
 image:
   repository: jaimehenao8126/trii-portfolio-manager
-  tag: "c360b1b8003c935e21113d094beab1e84a915782"
+  tag: "15f3921a"
   pullPolicy: IfNotPresent
 
 service:
