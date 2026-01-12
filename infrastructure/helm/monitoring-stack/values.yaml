@@ -201,7 +201,7 @@ kube-prometheus-stack:
         enabled: true
         host: smtp.gmail.com:587
         user: alerts@trii.co
-        password: """$__file{/etc/secrets/smtp-password}"""
+        password: "$__file{/etc/secrets/smtp-password}"
         from_address: alerts@trii.co
         from_name: TRII Monitoring
     
