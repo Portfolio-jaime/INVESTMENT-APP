@@ -11,7 +11,10 @@ spec:
     repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP.git
     targetRevision: HEAD
     path: infrastructure/helm/frontend-app
-
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trii-platform
   
   syncPolicy:
     automated:
