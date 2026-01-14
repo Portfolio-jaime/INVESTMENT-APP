@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle, Home } from 'lucide-react';
 import Dashboard from './components/Dashboard';
+import LoveableDashboard from './components/LoveableDashboard';
 import ModernDashboard from './components/ModernDashboard';
 import Watchlist from './components/Watchlist';
 import PortfolioView from './components/PortfolioView';
@@ -202,7 +203,7 @@ const App: React.FC = () => {
             {/* Content */}
             <div className="space-y-6">
               {activeTab === 'landing' && <ModernLandingPage />}
-              {activeTab === 'dashboard' && <ModernDashboard />}
+              {activeTab === 'dashboard' && <LoveableDashboard addNotification={addNotification} />}
               {activeTab === 'watchlist' && <Watchlist addNotification={addNotification} />}
               {activeTab === 'portfolio' && <PortfolioView addNotification={addNotification} />}
             </div>

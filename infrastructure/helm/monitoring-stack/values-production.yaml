@@ -1,9 +1,9 @@
 # Production values for monitoring stack
 global:
-  imageRegistry: "trii-registry.azurecr.io"
-  storageClass: "premium-ssd"
-  domain: "trii.co"
-  environment: "production"
+  # imageRegistry: "trii-registry.azurecr.io"  # Disabled for local development
+  storageClass: "standard"  # Changed to standard for local Kind cluster
+  domain: "trii.local"
+  environment: "development"
 
 # Enhanced Prometheus configuration for production
 kube-prometheus-stack:
@@ -22,7 +22,7 @@ kube-prometheus-stack:
       storageSpec:
         volumeClaimTemplate:
           spec:
-            storageClassName: premium-ssd
+            storageClassName: standard
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
@@ -66,7 +66,7 @@ kube-prometheus-stack:
       storage:
         volumeClaimTemplate:
           spec:
-            storageClassName: premium-ssd
+            storageClassName: standard
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
