@@ -1,7 +1,92 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, RefreshCw, BarChart3, Activity, DollarSign, Zap } from 'lucide-react';
-import styled, { keyframes } from 'styled-components';
-import { designSystem } from '../theme/designSystem';
+
+interface SimpleDashboardProps {
+  addNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
+}
+
+const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) => {
+  const [apiStatus, setApiStatus] = useState<string>('Checking...');
+  const [portfolioData, setPortfolioData] = useState<any>(null);
+  const [marketData, setMarketData] = useState<any>(null);
+
+  useEffect(() => {
+    console.log('SimpleDashboard mounted');
+    
+    // Test API connectivity
+    const testAPIs = async () => {
+      try {
+        console.log('Testing portfolio API...');
+        const portfolioResponse = await fetch('/api/portfolio/health');
+        const portfolioResult = await portfolioResponse.json();
+        console.log('Portfolio API response:', portfolioResult);
+        setPortfolioData(portfolioResult);
+        
+        console.log('Testing market data API...');
+        const marketResponse = await fetch('/api/market-data/health');
+        const marketResult = await marketResponse.json();
+        console.log('Market Data API response:', marketResult);
+        setMarketData(marketResult);
+        
+        setApiStatus('APIs working!');
+        addNotification('success', 'APIs connected successfully');
+      } catch (error) {
+        console.error('API test failed:', error);
+        setApiStatus(`API Error: ${error}`);
+        addNotification('error', `API connection failed: ${error}`);
+      }
+    };
+
+    testAPIs();
+  }, [addNotification]);
+
+  return (
+    <div style={{ padding: '20px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+      <h1 style={{ color: '#333', marginBottom: '20px' }}>🚀 TRII Dashboard - Simple Test</h1>
+      
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ color: '#007bff' }}>API Connection Status</h2>
+        <p style={{ fontSize: '18px', fontWeight: 'bold', color: apiStatus.includes('Error') ? 'red' : 'green' }}>
+          {apiStatus}
+        </p>
+      </div>
+
+      {portfolioData && (
+        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ color: '#28a745' }}>📊 Portfolio Manager</h3>
+          <pre style={{ backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '4px', fontSize: '12px' }}>
+            {JSON.stringify(portfolioData, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {marketData && (
+        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ color: '#ffc107' }}>📈 Market Data Service</h3>
+          <pre style={{ backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '4px', fontSize: '12px' }}>
+            {JSON.stringify(marketData, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+        <h3 style={{ color: '#6f42c1' }}>🔧 Debug Info</h3>
+        <ul style={{ listStyleType: 'none', padding: 0 }}>
+          <li style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>
+            <strong>Current URL:</strong> {window.location.href}
+          </li>
+          <li style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>
+            <strong>User Agent:</strong> {navigator.userAgent}
+          </li>
+          <li style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>
+            <strong>Timestamp:</strong> {new Date().toISOString()}
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+export default SimpleDashboard;
 
 // 🎭 Premium Animations
 const fadeIn = keyframes`
