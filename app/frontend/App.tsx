@@ -22,9 +22,7 @@ interface Notification {
 }
 
 const App: React.FC = () => {
-  const [setupCompleted, setSetupCompleted] = useState(
-    localStorage.getItem('trii_setup_completed') === 'true'
-  );
+  const [setupCompleted, setSetupCompleted] = useState(true); // Force setup completion for testing
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
