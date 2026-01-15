@@ -34,7 +34,7 @@ ingress:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
   hosts:
-    - host: trii-frontend.local
+    - host: app.trii-platform.local
       paths:
         - path: /
           pathType: Prefix
