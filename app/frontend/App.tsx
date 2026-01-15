@@ -32,7 +32,7 @@ const App: React.FC = () => {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
   // Use backend health hook
-  const { isHealthy, isLoading: healthLoading } = useBackendHealth();
+  const { loading: healthLoading, isPortfolioHealthy, isMarketDataHealthy } = useBackendHealth();
 
   // Handle setup completion
   const handleSetupComplete = () => {
