@@ -30,6 +30,36 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
+          # API proxy routes for backend services
+          - path: /api/portfolio
+            pathType: Prefix
+            backend:
+              service:
+                name: portfolio-manager
+                port:
+                  number: 8003
+          - path: /api/market-data
+            pathType: Prefix
+            backend:
+              service:
+                name: market-data
+                port:
+                  number: 8001
+          - path: /api/analysis
+            pathType: Prefix
+            backend:
+              service:
+                name: analysis-engine
+                port:
+                  number: 8002
+          - path: /api/ml-prediction
+            pathType: Prefix
+            backend:
+              service:
+                name: ml-prediction
+                port:
+                  number: 8004
+          # Frontend application (must be last for catch-all)
           {{- range .paths }}
           - path: {{ .path }}
             {{- if .pathType }}

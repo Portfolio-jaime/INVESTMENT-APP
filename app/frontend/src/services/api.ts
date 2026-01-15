@@ -2,14 +2,9 @@
  * API Service - Centralized API client for backend communication
  */
 
-// Use localhost for frontend-to-backend communication with proper headers
-// The ingress routes based on Host header, so we use localhost with custom headers
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost';
-const MARKET_DATA_URL = (import.meta as any).env?.VITE_MARKET_DATA_URL || 'http://localhost';
-
-// Host headers for proper ingress routing
-const PORTFOLIO_HOST = 'portfolio-manager.trii-platform.local';
-const MARKET_DATA_HOST = 'market-data.trii-platform.local';
+// Use relative URLs that will be proxied through the frontend ingress
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '/api/portfolio';
+const MARKET_DATA_URL = (import.meta as any).env?.VITE_MARKET_DATA_URL || '/api/market-data';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -70,26 +65,14 @@ export interface Transaction {
 }
 
 class ApiService {
-  private getHostHeader(url: string): string {
-    if (url.includes('/api/v1/portfolios') || url.includes('/health') && url.includes(API_BASE_URL)) {
-      return PORTFOLIO_HOST;
-    } else if (url.includes('/quotes') || url.includes('/health') && url.includes(MARKET_DATA_URL)) {
-      return MARKET_DATA_HOST;
-    }
-    return 'localhost';
-  }
-
   private async request<T>(
     url: string, 
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const hostHeader = this.getHostHeader(url);
-      
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
-          'Host': hostHeader,
           ...options.headers,
         },
         ...options,
