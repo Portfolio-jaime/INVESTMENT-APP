@@ -2,10 +2,10 @@
  * API Service - Centralized API client for backend communication
  */
 
-// Use localhost with port-forwarding for frontend-to-backend communication
-// The frontend runs in the browser and needs to access services via localhost
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8003';
-const MARKET_DATA_URL = (import.meta as any).env?.VITE_MARKET_DATA_URL || 'http://localhost:8001';
+// Use ingress hostnames for frontend-to-backend communication
+// The frontend runs in the browser and needs to access services via ingress
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://portfolio-manager.trii-platform.local';
+const MARKET_DATA_URL = (import.meta as any).env?.VITE_MARKET_DATA_URL || 'http://market-data.trii-platform.local';
 
 export interface ApiResponse<T = any> {
   success: boolean;

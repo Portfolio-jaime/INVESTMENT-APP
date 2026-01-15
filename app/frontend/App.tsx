@@ -25,11 +25,14 @@ const App: React.FC = () => {
   const [setupCompleted, setSetupCompleted] = useState(
     localStorage.getItem('trii_setup_completed') === 'true'
   );
-  const [activeTab, setActiveTab] = useState('landing');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  
+  // Use backend health hook
+  const { isHealthy, isLoading: healthLoading } = useBackendHealth();
 
   // Handle setup completion
   const handleSetupComplete = () => {

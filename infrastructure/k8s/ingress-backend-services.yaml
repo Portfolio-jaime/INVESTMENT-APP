@@ -1,0 +1,84 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trii-backend-services
+  namespace: trii-platform
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  # Portfolio Manager Service
+  - host: portfolio-manager.trii-platform.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: portfolio-manager
+            port:
+              number: 8003
+  
+  # Market Data Service  
+  - host: market-data.trii-platform.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: market-data
+            port:
+              number: 8001
+  
+  # Analysis Engine Service
+  - host: analysis-engine.trii-platform.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: analysis-engine
+            port:
+              number: 8002
+  
+  # ML Prediction Service
+  - host: ml-prediction.trii-platform.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ml-prediction
+            port:
+              number: 8004
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trii-app-ingress
+  namespace: trii-platform
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  # Frontend Application
+  - host: app.trii-platform.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-app
+            port:
+              number: 3000
