@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getQuotes, getHistoricalData, HistoricalData } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { TrendingUp, TrendingDown, RefreshCw, AlertTriangle, Loader2, BarChart3, Activity, DollarSign, Zap } from 'lucide-react';
-import { useAppStore, Quote } from '../store/useAppStore';
-import ServiceStatus from './common/ServiceStatus';
+import { TrendingUp, TrendingDown, RefreshCw, AlertTriangle, Loader2, BarChart3, Activity, DollarSign, Zap, Wifi, WifiOff, CheckCircle } from 'lucide-react';
 import styled, { keyframes } from 'styled-components';
 import { designSystem } from '../theme/designSystem';
+import { usePortfolios, useTopMovers, useBackendHealth, useRealTimeData, usePortfolioSummary } from '../src/hooks/useApi';
 
 interface DashboardProps {
   addNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
@@ -18,50 +16,60 @@ const float = keyframes`
 `;
 
 const shimmer = keyframes`
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+`;
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 `;
 
 const pulse = keyframes`
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.5; }
 `;
 
-const fadeIn = keyframes`
-  from { 
-    opacity: 0; 
-    transform: translateY(10px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
-`;
-
-// 🎨 Premium Button Component
+// 🎯 Button Component with Loveable Design
 const Button = styled.button<{
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
+  variant?: 'primary' | 'secondary' | 'success' | 'error' | 'warning';
   size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
   disabled?: boolean;
+  isLoading?: boolean;
 }>`
-  font-family: ${designSystem.typography.fontFamily.sans};
-  font-weight: ${designSystem.typography.fontWeight.medium};
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: ${designSystem.spacing.sm};
+  gap: ${designSystem.spacing.xs};
   border: none;
+  border-radius: ${designSystem.borderRadius.lg};
+  font-family: ${designSystem.typography.fontFamily.sans};
+  font-weight: ${designSystem.typography.fontWeight.medium};
   cursor: pointer;
-  outline: none;
-  border-radius: ${designSystem.borderRadius.md};
   transition: all ${designSystem.animation.duration.normal} ${designSystem.animation.easing.default};
+  position: relative;
+  overflow: hidden;
   
   ${({ size = 'md' }) => {
     const sizes = {
-      sm: `padding: ${designSystem.spacing.sm} ${designSystem.spacing.md}; font-size: ${designSystem.typography.fontSize.sm.size}; height: 32px;`,
-      md: `padding: ${designSystem.spacing.md} ${designSystem.spacing.lg}; font-size: ${designSystem.typography.fontSize.base.size}; height: 40px;`,
-      lg: `padding: ${designSystem.spacing.lg} ${designSystem.spacing.xl}; font-size: ${designSystem.typography.fontSize.lg.size}; height: 48px;`,
+      sm: `
+        padding: ${designSystem.spacing.sm} ${designSystem.spacing.lg};
+        font-size: ${designSystem.typography.fontSize.sm.size};
+      `,
+      md: `
+        padding: ${designSystem.spacing.md} ${designSystem.spacing.xl};
+        font-size: ${designSystem.typography.fontSize.base.size};
+      `,
+      lg: `
+        padding: ${designSystem.spacing.lg} ${designSystem.spacing['2xl']};
+        font-size: ${designSystem.typography.fontSize.lg.size};
+      `,
     };
     return sizes[size];
   }}
@@ -70,31 +78,29 @@ const Button = styled.button<{
     const variants = {
       primary: `
         background: ${designSystem.colors.gradient.primary};
-        color: ${designSystem.colors.text.inverse};
-        &:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: ${designSystem.shadows.glow.primary}, ${designSystem.shadows.lg};
-        }
+        color: white;
+        &:hover { transform: translateY(-2px); box-shadow: ${designSystem.shadows.lg}; }
       `,
       secondary: `
         background: ${designSystem.colors.background.secondary};
         color: ${designSystem.colors.text.primary};
-        border: 1px solid ${designSystem.colors.border.light};
-        &:hover:not(:disabled) {
-          background: ${designSystem.colors.gray[100]};
-        }
+        border: 1px solid ${designSystem.colors.border.medium};
+        &:hover { border-color: ${designSystem.colors.primary[300]}; }
       `,
       success: `
-        background: ${designSystem.colors.gradient.success};
-        color: ${designSystem.colors.text.inverse};
-      `,
-      warning: `
-        background: ${designSystem.colors.gradient.sunset};
-        color: ${designSystem.colors.text.inverse};
+        background: ${designSystem.colors.success[500]};
+        color: white;
+        &:hover { background: ${designSystem.colors.success[600]}; }
       `,
       error: `
         background: ${designSystem.colors.error[500]};
-        color: ${designSystem.colors.text.inverse};
+        color: white;
+        &:hover { background: ${designSystem.colors.error[600]}; }
+      `,
+      warning: `
+        background: ${designSystem.colors.warning[500]};
+        color: white;
+        &:hover { background: ${designSystem.colors.warning[600]}; }
       `,
     };
     return variants[variant];
@@ -335,13 +341,6 @@ const ChangeIndicator = styled.div<{ isPositive: boolean }>`
   }
 `;
 
-const ChartContainer = styled(Card)`
-  background: ${designSystem.colors.background.primary};
-  border: 1px solid ${designSystem.colors.border.light};
-  box-shadow: ${designSystem.shadows.xl};
-  animation: ${fadeIn} ${designSystem.animation.duration.slow} ${designSystem.animation.easing.default} 0.2s;
-`;
-
 const StatusIndicator = styled.div<{ status: 'live' | 'updating' | 'offline' }>`
   display: flex;
   align-items: center;
@@ -458,91 +457,49 @@ const ErrorState = styled(Card)`
 `;
 
 const LoveableDashboard: React.FC<DashboardProps> = ({ addNotification }) => {
-  const [chartData, setChartData] = useState<HistoricalData[]>([]);
-  const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
-  const [refreshing, setRefreshing] = useState(false);
-  const [chartLoading, setChartLoading] = useState(false);
+  const [selectedPortfolio, setSelectedPortfolio] = useState<string | null>(null);
+  
+  // API hooks
+  const { 
+    portfolioHealth, 
+    marketDataHealth, 
+    isPortfolioHealthy, 
+    isMarketDataHealthy, 
+    loading: healthLoading 
+  } = useBackendHealth();
+  
+  const { data: portfolios, loading: portfoliosLoading, error: portfoliosError } = usePortfolios();
+  const { data: topMovers, loading: topMoversLoading, error: topMoversError } = useTopMovers();
+  const { data: portfolioSummary, loading: summaryLoading } = usePortfolioSummary(selectedPortfolio);
+  
+  // Real-time market data for selected symbols
+  const symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA'];
+  const { 
+    data: marketQuotes, 
+    loading: marketLoading, 
+    error: marketError,
+    lastUpdate
+  } = useRealTimeData(symbols, 30000); // Update every 30 seconds
 
-  // Get state and actions from store
-  const quotes = useAppStore((state) => state.quotes);
-  const loading = useAppStore((state) => state.loading);
-  const error = useAppStore((state) => state.error);
-  const refreshMarketData = useAppStore((state) => state.refreshMarketData);
-  const setQuotes = useAppStore((state) => state.setQuotes);
-
-  const MARKET_SYMBOLS = ['^GSPC', '^DJI', '^IXIC']; // S&P 500, Dow Jones, Nasdaq
-
-  const fetchMarketOverview = async (showNotifications = false) => {
-    try {
-      const quotesList = await getQuotes(MARKET_SYMBOLS);
-      const quotesMap = quotesList.reduce((acc, quote) => ({
-        ...acc,
-        [quote.symbol]: {
-          symbol: quote.symbol,
-          price: quote.price,
-          change: quote.change,
-          changePercent: quote.changePercent,
-          volume: quote.volume,
-          timestamp: new Date().toISOString(),
-        }
-      }), {});
-
-      setQuotes({ ...quotes, ...quotesMap });
-
-      if (showNotifications) {
-        addNotification('success', 'Market data updated successfully');
-      }
-    } catch (err) {
-      console.error('Error fetching market overview:', err);
-      if (showNotifications) {
-        addNotification('error', 'Failed to update market data');
-      }
-    }
-  };
-
-  const fetchChartData = async (symbol: string, showNotifications = false) => {
-    try {
-      setChartLoading(true);
-      const data = await getHistoricalData(symbol, '1mo');
-      setChartData(data);
-      if (showNotifications) {
-        addNotification('success', `Chart data for ${symbol} updated`);
-      }
-    } catch (err) {
-      console.error('Error fetching chart data:', err);
-      if (showNotifications) {
-        addNotification('error', `Failed to load chart for ${symbol}`);
-      }
-    } finally {
-      setChartLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await Promise.all([
-      fetchMarketOverview(true),
-      fetchChartData(selectedSymbol, true)
-    ]);
-    setRefreshing(false);
-  };
-
+  // Set first portfolio as selected if available
   useEffect(() => {
-    const init = async () => {
-      await Promise.all([
-        fetchMarketOverview(),
-        fetchChartData(selectedSymbol)
-      ]);
-    };
-    init();
+    if (portfolios && portfolios.length > 0 && !selectedPortfolio) {
+      setSelectedPortfolio(portfolios[0].id);
+    }
+  }, [portfolios, selectedPortfolio]);
 
-    const interval = setInterval(() => {
-      fetchMarketOverview();
-      fetchChartData(selectedSymbol);
-    }, 60000); // Refresh every minute
+  // Notification for successful data updates
+  useEffect(() => {
+    if (lastUpdate) {
+      addNotification('success', 'Market data updated');
+    }
+  }, [lastUpdate, addNotification]);
 
-    return () => clearInterval(interval);
-  }, [selectedSymbol]);
+  const getConnectionStatus = () => {
+    if (healthLoading) return 'updating';
+    if (isPortfolioHealthy && isMarketDataHealthy) return 'live';
+    return 'offline';
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -553,28 +510,29 @@ const LoveableDashboard: React.FC<DashboardProps> = ({ addNotification }) => {
     }).format(price);
   };
 
-  const formatChange = (change: number, changePercent: number) => {
+  const formatChange = (change: number) => {
     const isPositive = change >= 0;
     return {
-      value: `${isPositive ? '+' : ''}${change.toFixed(2)} (${changePercent.toFixed(2)}%)`,
+      value: `${isPositive ? '+' : ''}${change.toFixed(2)}%`,
       isPositive
     };
   };
 
-  if (loading) {
+  if (portfoliosLoading || topMoversLoading || marketLoading) {
     return (
       <DashboardContainer>
         <Container maxWidth="1400px">
           <LoadingState>
             <Loader2 size={48} />
-            <Text size="lg" muted>Loading market data...</Text>
+            <Text size="lg" muted>Loading investment data...</Text>
           </LoadingState>
         </Container>
       </DashboardContainer>
     );
   }
 
-  if (error) {
+  if (portfoliosError || topMoversError || marketError) {
+    const errorMessage = portfoliosError || topMoversError || marketError || 'Unknown error occurred';
     return (
       <DashboardContainer>
         <Container maxWidth="1400px">
@@ -582,14 +540,20 @@ const LoveableDashboard: React.FC<DashboardProps> = ({ addNotification }) => {
             <Flex align="center" gap={designSystem.spacing.md}>
               <AlertTriangle size={24} />
               <div>
-                <h3>Error Loading Data</h3>
-                <p>{error}</p>
+                <h3>Connection Error</h3>
+                <p>{errorMessage}</p>
+                <Text size="sm" muted style={{ marginBottom: designSystem.spacing.lg }}>
+                  Portfolio Service: {isPortfolioHealthy ? '✅ Connected' : '❌ Disconnected'}
+                  <br />
+                  Market Data Service: {isMarketDataHealthy ? '✅ Connected' : '❌ Disconnected'}
+                </Text>
                 <Button 
                   variant="error" 
-                  onClick={handleRefresh}
+                  onClick={() => window.location.reload()}
                   size="md"
                 >
-                  Try Again
+                  <RefreshCw size={16} />
+                  Retry Connection
                 </Button>
               </div>
             </Flex>
@@ -599,67 +563,123 @@ const LoveableDashboard: React.FC<DashboardProps> = ({ addNotification }) => {
     );
   }
 
-  // Convert quotes object to array for market overview
-  const marketOverview = MARKET_SYMBOLS
-    .map(symbol => quotes[symbol])
-    .filter(Boolean) as Quote[];
-
   return (
     <DashboardContainer>
       <Container maxWidth="1400px">
-        {/* Service Status */}
-        <ServiceStatus />
+        {/* Backend Health Status */}
+        <Flex justify="between" align="center" style={{ marginBottom: designSystem.spacing.lg }}>
+          <StatusIndicator status={getConnectionStatus()}>
+            {getConnectionStatus() === 'live' && <CheckCircle size={16} />}
+            {getConnectionStatus() === 'updating' && <RefreshCw size={16} />}
+            {getConnectionStatus() === 'offline' && <WifiOff size={16} />}
+            Backend {getConnectionStatus() === 'live' ? 'Connected' : 
+                   getConnectionStatus() === 'updating' ? 'Checking...' : 'Disconnected'}
+          </StatusIndicator>
+          
+          {lastUpdate && (
+            <Text size="sm" muted>
+              Last update: {lastUpdate.toLocaleTimeString()}
+            </Text>
+          )}
+        </Flex>
 
         {/* Header Section */}
         <Flex justify="between" align="center" style={{ marginBottom: designSystem.spacing['3xl'] }}>
           <div>
             <Heading level={1} gradient>
-              Market Overview
+              Investment Dashboard
             </Heading>
             <Text size="lg" muted style={{ marginTop: designSystem.spacing.sm }}>
-              Real-time financial data and insights
+              Real-time portfolio management and market insights
             </Text>
           </div>
           
           <Flex align="center" gap={designSystem.spacing.lg}>
-            <StatusIndicator status={refreshing ? 'updating' : 'live'}>
-              {refreshing ? 'Updating...' : 'Live Data'}
-            </StatusIndicator>
+            {portfolios && portfolios.length > 0 && (
+              <SelectInput 
+                value={selectedPortfolio || ''} 
+                onChange={(e) => setSelectedPortfolio(e.target.value)}
+              >
+                <option value="">Select Portfolio</option>
+                {portfolios.map((portfolio: any) => (
+                  <option key={portfolio.id} value={portfolio.id}>
+                    {portfolio.name}
+                  </option>
+                ))}
+              </SelectInput>
+            )}
             
-            <Button
-              variant="primary"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              isLoading={refreshing}
-              size="md"
-            >
-              <RefreshCw size={16} />
-              {refreshing ? 'Refreshing' : 'Refresh'}
-            </Button>
+            <StatusIndicator status={marketLoading ? 'updating' : 'live'}>
+              <Wifi size={16} />
+              {marketLoading ? 'Updating...' : 'Live Data'}
+            </StatusIndicator>
           </Flex>
         </Flex>
 
-        {/* Market Overview Cards */}
+        {/* Portfolio Summary */}
+        {selectedPortfolio && portfolioSummary && (
+          <StatsGrid style={{ marginBottom: designSystem.spacing['2xl'] }}>
+            <StatCard>
+              <DollarSign size={32} color={designSystem.colors.primary[500]} />
+              <Heading level={3} style={{ margin: `${designSystem.spacing.md} 0` }}>
+                {formatPrice(portfolioSummary.total_value)}
+              </Heading>
+              <Text muted>Total Portfolio Value</Text>
+            </StatCard>
+            
+            <StatCard>
+              <Activity size={32} color={designSystem.colors.success[500]} />
+              <Heading level={3} style={{ margin: `${designSystem.spacing.md} 0` }}>
+                {formatPrice(portfolioSummary.total_pnl)}
+              </Heading>
+              <Text muted>Total P&L</Text>
+              <ChangeIndicator isPositive={portfolioSummary.total_pnl >= 0}>
+                {portfolioSummary.total_pnl >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                {formatChange(portfolioSummary.total_pnl_percent).value}
+              </ChangeIndicator>
+            </StatCard>
+            
+            <StatCard>
+              <BarChart3 size={32} color={designSystem.colors.warning[500]} />
+              <Heading level={3} style={{ margin: `${designSystem.spacing.md} 0` }}>
+                {portfolioSummary.positions_count}
+              </Heading>
+              <Text muted>Active Positions</Text>
+            </StatCard>
+            
+            <StatCard>
+              <BarChart3 size={32} color={designSystem.colors.primary[500]} />
+              <Heading level={3} style={{ margin: `${designSystem.spacing.md} 0` }}>
+                {formatPrice(portfolioSummary.cash_balance)}
+              </Heading>
+              <Text muted>Cash Balance</Text>
+            </StatCard>
+          </StatsGrid>
+        )}
+
+        {/* Market Overview */}
+        <Heading level={2} style={{ marginBottom: designSystem.spacing.xl }}>
+          Market Overview
+        </Heading>
+        
         <StatsGrid>
-          {marketOverview.map((quote) => {
-            const change = formatChange(quote.change, quote.changePercent);
-            const displayName = quote.symbol === '^GSPC' ? 'S&P 500' :
-                               quote.symbol === '^DJI' ? 'Dow Jones' : 'Nasdaq';
+          {marketQuotes.map((quote: any) => {
+            const change = formatChange(quote.change_percent);
             const trend = change.isPositive ? 'positive' : 'negative';
 
             return (
-              <MarketCard key={quote.symbol} trend={trend} interactive padding="lg">
+              <MarketCard key={quote.symbol} trend={trend} interactive>
                 <Flex justify="between" align="start">
                   <div style={{ flex: 1 }}>
                     <Flex align="center" gap={designSystem.spacing.sm}>
-                      <BarChart3 size={20} color={designSystem.colors.primary[500]} />
+                      <Activity size={20} color={designSystem.colors.primary[500]} />
                       <Text weight="semibold" size="lg">
-                        {displayName}
+                        {quote.symbol}
                       </Text>
                     </Flex>
                     
                     <PriceDisplay trend={trend}>
-                      {formatPrice(quote.price)}
+                      {formatPrice(quote.current_price)}
                     </PriceDisplay>
                     
                     <ChangeIndicator isPositive={change.isPositive}>
@@ -678,10 +698,22 @@ const LoveableDashboard: React.FC<DashboardProps> = ({ addNotification }) => {
                   paddingTop: designSystem.spacing.lg,
                   borderTop: `1px solid ${designSystem.colors.border.light}` 
                 }}>
-                  <Flex justify="between" align="center">
+                  <Flex justify="between" align="center" style={{ marginBottom: designSystem.spacing.sm }}>
                     <Text size="sm" muted>Volume</Text>
                     <Text size="sm" weight="medium">
-                      {quote.volume.toLocaleString()}
+                      {quote.volume?.toLocaleString() || 'N/A'}
+                    </Text>
+                  </Flex>
+                  <Flex justify="between" align="center" style={{ marginBottom: designSystem.spacing.sm }}>
+                    <Text size="sm" muted>High</Text>
+                    <Text size="sm" weight="medium">
+                      {formatPrice(quote.high)}
+                    </Text>
+                  </Flex>
+                  <Flex justify="between" align="center">
+                    <Text size="sm" muted>Low</Text>
+                    <Text size="sm" weight="medium">
+                      {formatPrice(quote.low)}
                     </Text>
                   </Flex>
                 </div>
@@ -690,146 +722,65 @@ const LoveableDashboard: React.FC<DashboardProps> = ({ addNotification }) => {
           })}
         </StatsGrid>
 
-        {/* Price Chart */}
-        <ChartContainer padding="xl">
-          <Flex justify="between" align="start" style={{ marginBottom: designSystem.spacing['2xl'] }}>
-            <div>
-              <Heading level={2}>Price Chart</Heading>
-              <Text muted style={{ marginTop: designSystem.spacing.xs }}>
-                Historical price data for {selectedSymbol}
-              </Text>
-            </div>
+        {/* Top Movers */}
+        {topMovers && topMovers.length > 0 && (
+          <>
+            <Heading level={2} style={{ marginTop: designSystem.spacing['3xl'], marginBottom: designSystem.spacing.xl }}>
+              Top Movers
+            </Heading>
+            
+            <StatsGrid>
+              {topMovers.slice(0, 6).map((quote: any) => {
+                const change = formatChange(quote.change_percent);
+                const trend = change.isPositive ? 'positive' : 'negative';
 
-            <Flex align="center" gap={designSystem.spacing.lg}>
-              <SelectInput
-                value={selectedSymbol}
-                onChange={(e) => setSelectedSymbol(e.target.value)}
-              >
-                <option value="AAPL">Apple (AAPL)</option>
-                <option value="MSFT">Microsoft (MSFT)</option>
-                <option value="GOOGL">Alphabet (GOOGL)</option>
-                <option value="AMZN">Amazon (AMZN)</option>
-                <option value="TSLA">Tesla (TSLA)</option>
-                <option value="NVDA">NVIDIA (NVDA)</option>
-                <option value="META">Meta (META)</option>
-              </SelectInput>
-            </Flex>
-          </Flex>
+                return (
+                  <MarketCard key={quote.symbol} trend={trend} interactive>
+                    <Flex align="center" gap={designSystem.spacing.sm}>
+                      <Zap size={20} color={designSystem.colors.warning[500]} />
+                      <Text weight="semibold" size="lg">
+                        {quote.symbol}
+                      </Text>
+                    </Flex>
+                    
+                    <PriceDisplay trend={trend} style={{ fontSize: designSystem.typography.fontSize['2xl'].size }}>
+                      {formatPrice(quote.current_price)}
+                    </PriceDisplay>
+                    
+                    <ChangeIndicator isPositive={change.isPositive}>
+                      {change.isPositive ? (
+                        <TrendingUp size={16} />
+                      ) : (
+                        <TrendingDown size={16} />
+                      )}
+                      <span>{change.value}</span>
+                    </ChangeIndicator>
+                  </MarketCard>
+                );
+              })}
+            </StatsGrid>
+          </>
+        )}
 
-          <div style={{ height: '320px', marginBottom: designSystem.spacing.xl }}>
-            {chartLoading ? (
-              <LoadingState>
-                <Loader2 size={32} />
-                <Text muted>Loading chart data...</Text>
-              </LoadingState>
-            ) : chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={designSystem.colors.primary[500]} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={designSystem.colors.primary[500]} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid 
-                    strokeDasharray="3 3" 
-                    stroke={designSystem.colors.border.light}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    stroke={designSystem.colors.text.tertiary}
-                    tick={{ fill: designSystem.colors.text.tertiary, fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    stroke={designSystem.colors.text.tertiary}
-                    tick={{ fill: designSystem.colors.text.tertiary, fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={['dataMin - 5', 'dataMax + 5']}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: designSystem.colors.background.primary,
-                      border: `1px solid ${designSystem.colors.border.light}`,
-                      borderRadius: designSystem.borderRadius.md,
-                      boxShadow: designSystem.shadows.lg,
-                      color: designSystem.colors.text.primary
-                    }}
-                    labelStyle={{ 
-                      color: designSystem.colors.text.secondary, 
-                      fontWeight: designSystem.typography.fontWeight.semibold 
-                    }}
-                    formatter={(value: any) => [formatPrice(value), 'Price']}
-                    labelFormatter={(label) => `Date: ${new Date(label).toLocaleDateString()}`}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="close"
-                    stroke={designSystem.colors.primary[500]}
-                    strokeWidth={2}
-                    fill="url(#colorPrice)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <LoadingState>
-                <Activity size={32} />
-                <Text muted>No chart data available</Text>
-              </LoadingState>
-            )}
-          </div>
+        {/* No Data States */}
+        {!portfolios || portfolios.length === 0 ? (
+          <Card style={{ marginTop: designSystem.spacing['2xl'], textAlign: 'center', padding: designSystem.spacing['3xl'] }}>
+            <DollarSign size={48} color={designSystem.colors.text.secondary} />
+            <Heading level={3} style={{ margin: `${designSystem.spacing.lg} 0` }}>
+              No Portfolios Found
+            </Heading>
+            <Text muted>Create your first portfolio to start tracking investments</Text>
+            <Button 
+              variant="primary" 
+              size="lg" 
+              style={{ marginTop: designSystem.spacing.xl }}
+              onClick={() => addNotification('info', 'Portfolio creation coming soon!')}
+            >
+              Create Portfolio
+            </Button>
+          </Card>
+        ) : null}
 
-          {/* Chart Stats */}
-          {chartData.length > 0 && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: designSystem.spacing.lg,
-              paddingTop: designSystem.spacing.xl,
-              borderTop: `1px solid ${designSystem.colors.border.light}`
-            }}>
-              <StatCard padding="md">
-                <DollarSign size={20} color={designSystem.colors.primary[500]} style={{ margin: '0 auto' }} />
-                <PriceDisplay style={{ fontSize: designSystem.typography.fontSize.xl.size, margin: `${designSystem.spacing.sm} 0` }}>
-                  {formatPrice(chartData[chartData.length - 1]?.close || 0)}
-                </PriceDisplay>
-                <Text size="sm" muted>Current Price</Text>
-              </StatCard>
-              
-              <StatCard padding="md">
-                <TrendingUp size={20} color={designSystem.colors.success[500]} style={{ margin: '0 auto' }} />
-                <PriceDisplay style={{ fontSize: designSystem.typography.fontSize.xl.size, margin: `${designSystem.spacing.sm} 0`, color: designSystem.colors.success[600] }}>
-                  {formatPrice(Math.max(...chartData.map(d => d.high)))}
-                </PriceDisplay>
-                <Text size="sm" muted>52W High</Text>
-              </StatCard>
-              
-              <StatCard padding="md">
-                <TrendingDown size={20} color={designSystem.colors.error[500]} style={{ margin: '0 auto' }} />
-                <PriceDisplay style={{ fontSize: designSystem.typography.fontSize.xl.size, margin: `${designSystem.spacing.sm} 0`, color: designSystem.colors.error[600] }}>
-                  {formatPrice(Math.min(...chartData.map(d => d.low)))}
-                </PriceDisplay>
-                <Text size="sm" muted>52W Low</Text>
-              </StatCard>
-              
-              <StatCard padding="md">
-                <Zap size={20} color={designSystem.colors.warning[500]} style={{ margin: '0 auto' }} />
-                <PriceDisplay style={{ 
-                  fontSize: designSystem.typography.fontSize.xl.size, 
-                  margin: `${designSystem.spacing.sm} 0`,
-                  color: (chartData[chartData.length - 1]?.close || 0) > (chartData[0]?.close || 0)
-                    ? designSystem.colors.success[600] 
-                    : designSystem.colors.error[600]
-                }}>
-                  {(((chartData[chartData.length - 1]?.close || 0) - (chartData[0]?.close || 0)) / (chartData[0]?.close || 1) * 100).toFixed(2)}%
-                </PriceDisplay>
-                <Text size="sm" muted>Period Change</Text>
-              </StatCard>
-            </div>
-          )}
-        </ChartContainer>
       </Container>
     </DashboardContainer>
   );

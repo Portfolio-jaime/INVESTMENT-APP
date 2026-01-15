@@ -10,6 +10,9 @@ import LandingPage from './components/LandingPage';
 import ModernLandingPage from './components/ModernLandingPage';
 import TriiLandingPage from './components/TriiLandingPage';
 import TriiLandingPageTest from './components/TriiLandingPageTest';
+// Import the new API hooks and notifications
+import { useBackendHealth } from './src/hooks/useApi';
+import { useNotifications } from './src/hooks/useNotifications';
 
 interface Notification {
   id: string;
