@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getQuotes, Quote as APIQuote } from '../services/api';
 import { Plus, Search, RefreshCw, AlertTriangle, Loader2, TrendingUp, TrendingDown, X, Tag } from 'lucide-react';
 import { useAppStore, Quote } from '../store/useAppStore';
@@ -26,9 +26,9 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
   const quotes = useAppStore((state) => state.quotes);
   const setQuotes = useAppStore((state) => state.setQuotes);
 
-  const watchlistSymbols = watchlistItems.map(item => item.symbol);
+  const watchlistSymbols = useMemo(() => watchlistItems.map(item => item.symbol), [watchlistItems]);
 
-  const fetchQuotes = async (showNotifications = false) => {
+  const fetchQuotes = useCallback(async (showNotifications = false) => {
     if (watchlistSymbols.length === 0) {
       setLoading(false);
       return;
@@ -39,7 +39,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
       // Fetch quotes for each symbol individually to handle API rate limits
       const quotePromises = watchlistSymbols.map(async (symbol) => {
         try {
-          const response = await fetch(`/api/v1/market-data/quotes/${symbol}`);
+          const response = await fetch(`http://localhost:8001/api/v1/market-data/quotes/${symbol}`);
           if (!response.ok) throw new Error(`Failed to fetch ${symbol}`);
           const quote = await response.json();
           return {
@@ -69,7 +69,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
         [quote.symbol]: quote
       }), {});
 
-      setQuotes({ ...quotes, ...quotesMap });
+      setQuotes(prevQuotes => ({ ...prevQuotes, ...quotesMap }));
 
       if (showNotifications) {
         addNotification('success', 'Watchlist updated with real-time data');
@@ -84,7 +84,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [watchlistSymbols, setQuotes, addNotification]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -136,7 +136,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
 
     const interval = setInterval(() => fetchQuotes(), 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, [watchlistSymbols]);
+  }, [fetchQuotes]); // Now fetchQuotes is stable with useCallback
 
   if (loading) {
     return (
