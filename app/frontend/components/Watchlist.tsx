@@ -12,6 +12,8 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [newSymbol, setNewSymbol] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
 
   // Get watchlist from stores
   const watchlistItems = useWatchlistStore((state) => state.items);
@@ -27,25 +29,50 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
   const watchlistSymbols = watchlistItems.map(item => item.symbol);
 
   const fetchQuotes = async (showNotifications = false) => {
+    if (watchlistSymbols.length === 0) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setError(null);
-      const quotesList = await getQuotes(watchlistSymbols);
+      // Fetch quotes for each symbol individually to handle API rate limits
+      const quotePromises = watchlistSymbols.map(async (symbol) => {
+        try {
+          const response = await fetch(`/api/market-data/quotes/${symbol}`);
+          if (!response.ok) throw new Error(`Failed to fetch ${symbol}`);
+          const quote = await response.json();
+          return {
+            symbol: quote.symbol,
+            price: parseFloat(quote.price) || 0,
+            change: parseFloat(quote.change) || 0,
+            changePercent: parseFloat(quote.changePercent) || 0,
+            volume: parseInt(quote.volume) || 0,
+            timestamp: new Date().toISOString(),
+          };
+        } catch (err) {
+          console.warn(`Failed to fetch quote for ${symbol}:`, err);
+          return {
+            symbol,
+            price: 0,
+            change: 0,
+            changePercent: 0,
+            volume: 0,
+            timestamp: new Date().toISOString(),
+          };
+        }
+      });
+      
+      const quotesList = await Promise.all(quotePromises);
       const quotesMap = quotesList.reduce((acc, quote) => ({
         ...acc,
-        [quote.symbol]: {
-          symbol: quote.symbol,
-          price: quote.price,
-          change: quote.change,
-          changePercent: quote.changePercent,
-          volume: quote.volume,
-          timestamp: new Date().toISOString(),
-        }
+        [quote.symbol]: quote
       }), {});
 
       setQuotes({ ...quotes, ...quotesMap });
 
       if (showNotifications) {
-        addNotification('success', 'Watchlist updated successfully');
+        addNotification('success', 'Watchlist updated with real-time data');
       }
     } catch (err) {
       console.error('Error fetching quotes:', err);
@@ -65,8 +92,20 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
   };
 
   const handleAddSymbol = (symbol: string) => {
-    addSymbol(symbol, ['stocks']);
-    addNotification('success', `${symbol.toUpperCase()} added to watchlist`);
+    const cleanSymbol = symbol.toUpperCase().trim();
+    if (cleanSymbol && !watchlistSymbols.includes(cleanSymbol)) {
+      addSymbol(cleanSymbol, ['stocks']);
+      addNotification('success', `${cleanSymbol} added to watchlist`);
+      setNewSymbol('');
+      setShowAddForm(false);
+    }
+  };
+
+  const handleAddSymbolForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newSymbol.trim()) {
+      handleAddSymbol(newSymbol);
+    }
   };
 
   const handleRemoveSymbol = (symbol: string) => {

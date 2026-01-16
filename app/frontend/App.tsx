@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle, Home } from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle, Home, Activity } from 'lucide-react';
 import Dashboard from './components/Dashboard';
+import InvestmentDashboard from './components/InvestmentDashboard';
 import LoveableDashboard from './components/LoveableDashboard';
 import SimpleDashboard from './components/SimpleDashboard';
 import ModernDashboard from './components/ModernDashboard';
 import Watchlist from './components/Watchlist';
 import PortfolioView from './components/PortfolioView';
+import EnhancedPortfolioView from './components/EnhancedPortfolioView';
 import SetupWizard from './components/SetupWizard/SetupWizard';
 import LandingPage from './components/LandingPage';
 import ModernLandingPage from './components/ModernLandingPage';
@@ -82,9 +84,10 @@ const App: React.FC = () => {
 
   const navigation = [
     { id: 'landing', label: 'Inicio', icon: Home, color: 'indigo' },
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, color: 'blue' },
+    { id: 'dashboard', label: 'Analytics', icon: Activity, color: 'blue' },
     { id: 'watchlist', label: 'Watchlist', icon: TrendingUp, color: 'green' },
-    { id: 'portfolio', label: 'Portfolio', icon: PieChart, color: 'purple' }
+    { id: 'portfolio', label: 'Portfolio', icon: PieChart, color: 'purple' },
+    { id: 'charts', label: 'Charts', icon: BarChart3, color: 'orange' }
   ];
 
   const getTabColor = (tabId: string) => {
@@ -200,8 +203,9 @@ const App: React.FC = () => {
               <p className="text-slate-600 dark:text-slate-300 mt-1">
                 {activeTab === 'landing' && 'Bienvenido a trii - Inversiones simples para colombianos'}
                 {activeTab === 'dashboard' && 'Real-time market overview and analytics'}
-                {activeTab === 'watchlist' && 'Track your favorite stocks and cryptocurrencies'}
-                {activeTab === 'portfolio' && 'Manage your investment portfolio'}
+                {activeTab === 'charts' && 'Interactive charts and investment analytics'}
+                {activeTab === 'watchlist' && 'Track your favorite stocks with real-time data'}
+                {activeTab === 'portfolio' && 'Manage your investment portfolio and performance'}
               </p>
             </div>
 
@@ -209,8 +213,9 @@ const App: React.FC = () => {
             <div className="space-y-6">
               {activeTab === 'landing' && <ModernLandingPage />}
               {activeTab === 'dashboard' && <SimpleDashboard addNotification={addNotification} />}
+              {activeTab === 'charts' && <InvestmentDashboard />}
               {activeTab === 'watchlist' && <Watchlist addNotification={addNotification} />}
-              {activeTab === 'portfolio' && <PortfolioView addNotification={addNotification} />}
+              {activeTab === 'portfolio' && <EnhancedPortfolioView addNotification={addNotification} />}
             </div>
           </div>
         </main>

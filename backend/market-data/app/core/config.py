@@ -46,9 +46,9 @@ class Settings(BaseSettings):
             return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
     
     # External APIs
-    ALPHA_VANTAGE_API_KEY: str = "demo"
-    TWELVE_DATA_API_KEY: Optional[str] = None
-    FINNHUB_API_KEY: Optional[str] = None
+    ALPHA_VANTAGE_API_KEY: str = "DMRJBMVCSWVOKFMO"
+    TWELVE_DATA_API_KEY: str = "8413f6c3e0824140b96b1934aae6221f"
+    FINNHUB_API_KEY: str = "d559u21r01qui216rkggd559u21r01qui216rkh0"
     
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 100
