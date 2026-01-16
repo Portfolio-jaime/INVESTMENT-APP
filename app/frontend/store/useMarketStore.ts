@@ -14,6 +14,7 @@ interface MarketStore {
 
   // UI state
   isOnline: boolean;
+  isLoading: boolean;
   lastUpdate: Date;
 
   // Actions
@@ -22,6 +23,7 @@ interface MarketStore {
   setHistoricalData: (symbol: string, data: HistoricalData[], ttl?: number) => void;
   getHistoricalData: (symbol: string) => HistoricalData[] | null;
   setOnlineStatus: (status: boolean) => void;
+  setLoading: (loading: boolean) => void;
   updateLastUpdate: () => void;
   clearCache: () => void;
   isCacheValid: (timestamp: number, ttl: number) => boolean;
@@ -33,6 +35,7 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
   quotes: {},
   historicalData: {},
   isOnline: true,
+  isLoading: false,
   lastUpdate: new Date(),
 
   setQuote: (symbol, quote, ttl = DEFAULT_TTL) => {
@@ -78,6 +81,8 @@ export const useMarketStore = create<MarketStore>((set, get) => ({
   },
 
   setOnlineStatus: (status) => set({ isOnline: status }),
+
+  setLoading: (loading) => set({ isLoading: loading }),
 
   updateLastUpdate: () => set({ lastUpdate: new Date() }),
 

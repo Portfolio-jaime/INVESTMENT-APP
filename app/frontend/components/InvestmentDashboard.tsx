@@ -35,7 +35,8 @@ const InvestmentDashboard: React.FC = () => {
   const [portfolioAllocation, setPortfolioAllocation] = useState<PortfolioAllocation[]>([]);
 
   const { quotes, isLoading } = useMarketStore();
-  const { theme } = useAppStore();
+  const { preferences } = useAppStore();
+  const theme = preferences.theme;
 
   // Popular symbols for quick selection
   const popularSymbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX'];
@@ -92,8 +93,8 @@ const InvestmentDashboard: React.FC = () => {
 
   // Mock market data from real quotes
   useEffect(() => {
-    const mockData: MarketData[] = popularSymbols.map(symbol => {
-      const quote = quotes.find(q => q.symbol === symbol);
+    const mockData: MarketData[] = popularSymbols.map((symbol: string) => {
+      const quote = quotes[symbol]?.data; // quotes is a Record<string, CachedData<Quote>>
       return {
         symbol,
         price: quote?.price || 100 + Math.random() * 200,

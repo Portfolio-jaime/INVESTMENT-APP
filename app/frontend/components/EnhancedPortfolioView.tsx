@@ -40,7 +40,8 @@ const EnhancedPortfolioView: React.FC<PortfolioViewProps> = ({ addNotification }
   const [loading, setLoading] = useState(false);
   const [showAddPosition, setShowAddPosition] = useState(false);
 
-  const { quotes, theme } = useAppStore();
+  const { quotes, preferences } = useAppStore();
+  const theme = preferences.theme;
 
   // Mock portfolio data
   useEffect(() => {
