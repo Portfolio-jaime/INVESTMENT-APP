@@ -2,9 +2,10 @@
  * API Configuration based on environment
  */
 
-// Environment detection with fallbacks
-const isLocal = import.meta.env.VITE_ENV === 'local' || import.meta.env.DEV || false;
-const isCluster = import.meta.env.VITE_ENV === 'cluster' || import.meta.env.PROD || false;
+// Environment detection with better logic
+const isDev = import.meta.env.DEV;
+const isLocal = import.meta.env.VITE_ENV === 'local' || (isDev && import.meta.env.VITE_ENV !== 'cluster');
+const isCluster = import.meta.env.VITE_ENV === 'cluster' || (!isDev && import.meta.env.VITE_ENV !== 'local');
 
 // Base URL configuration
 const getBaseUrl = () => {
