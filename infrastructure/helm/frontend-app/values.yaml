@@ -4,7 +4,7 @@ replicaCount: 1
 image:
   repository: jaimehenao8126/trii-frontend-app
   pullPolicy: Always
-  tag: "2c1add7e"  # Temporary: use working image while workflow builds new ones
+  tag: "9fd789ec"  # Temporary: use working image while workflow builds new ones
 
 imagePullSecrets: []
 nameOverride: ""
