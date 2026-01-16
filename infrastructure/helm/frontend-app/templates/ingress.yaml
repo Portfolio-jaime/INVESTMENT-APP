@@ -30,7 +30,14 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
-          # API proxy routes for backend services (Fixed routing)
+          # API proxy routes for backend services (Fixed routing with correct paths)
+          - path: /api/v1/market-data
+            pathType: Prefix
+            backend:
+              service:
+                name: market-data
+                port:
+                  number: 8001
           - path: /api/portfolio
             pathType: Prefix
             backend:
@@ -38,13 +45,6 @@ spec:
                 name: portfolio-manager
                 port:
                   number: 8003
-          - path: /api/market-data
-            pathType: Prefix
-            backend:
-              service:
-                name: market-data
-                port:
-                  number: 8001
           - path: /api/analysis
             pathType: Prefix
             backend:

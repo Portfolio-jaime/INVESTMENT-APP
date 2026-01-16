@@ -39,7 +39,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
       // Fetch quotes for each symbol individually to handle API rate limits
       const quotePromises = watchlistSymbols.map(async (symbol) => {
         try {
-          const response = await fetch(`/api/market-data/quotes/${symbol}`);
+          const response = await fetch(`/api/v1/market-data/quotes/${symbol}`);
           if (!response.ok) throw new Error(`Failed to fetch ${symbol}`);
           const quote = await response.json();
           return {
