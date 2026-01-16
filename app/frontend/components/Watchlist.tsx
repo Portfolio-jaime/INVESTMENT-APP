@@ -24,7 +24,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
 
   // Get quotes from app store
   const quotes = useAppStore((state) => state.quotes);
-  const setQuotes = useAppStore((state) => state.setQuotes);
+  const mergeQuotes = useAppStore((state) => state.mergeQuotes);
 
   const watchlistSymbols = useMemo(() => watchlistItems.map(item => item.symbol), [watchlistItems]);
 
@@ -64,12 +64,12 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
       });
       
       const quotesList = await Promise.all(quotePromises);
-      const quotesMap = quotesList.reduce((acc, quote) => ({
+      const quotesMap: Record<string, Quote> = quotesList.reduce((acc, quote) => ({
         ...acc,
         [quote.symbol]: quote
-      }), {});
+      }), {} as Record<string, Quote>);
 
-      setQuotes(prevQuotes => ({ ...prevQuotes, ...quotesMap }));
+      mergeQuotes(quotesMap);
 
       if (showNotifications) {
         addNotification('success', 'Watchlist updated with real-time data');
@@ -84,7 +84,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ addNotification }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [watchlistSymbols, setQuotes, addNotification]);
+  }, [watchlistSymbols, mergeQuotes, addNotification]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

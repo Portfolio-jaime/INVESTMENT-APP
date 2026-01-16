@@ -82,6 +82,7 @@ export interface AppState {
   // Actions
   setQuote: (symbol: string, quote: Quote) => void;
   setQuotes: (quotes: Record<string, Quote>) => void;
+  mergeQuotes: (quotes: Record<string, Quote>) => void;
   selectSymbol: (symbol: string | null) => void;
 
   setPortfolio: (positions: Position[], cash: number) => void;
@@ -148,6 +149,11 @@ export const useAppStore = create<AppState>()(
           })),
 
         setQuotes: (quotes) => set({ quotes }),
+
+        mergeQuotes: (quotes) =>
+          set((state) => ({
+            quotes: { ...state.quotes, ...quotes },
+          })),
 
         selectSymbol: (symbol) => set({ selectedSymbol: symbol }),
 
