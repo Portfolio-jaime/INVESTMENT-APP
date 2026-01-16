@@ -1,10 +1,10 @@
 import axios from 'axios';
+import { API_ENDPOINTS } from '../src/config/api';
 
-// Local development configuration
-const MARKET_DATA_API = 'http://localhost:8001/api/v1/market-data';
-const PORTFOLIO_API = 'http://localhost:8003/api/v1/portfolio';
-const ANALYSIS_API = 'http://localhost:8002/api/v1/analysis';
-const PREDICTIONS_API = 'http://localhost:8004/api/v1/predictions';
+const MARKET_DATA_API = API_ENDPOINTS.MARKET_DATA;
+const PORTFOLIO_API = API_ENDPOINTS.PORTFOLIO;
+const ANALYSIS_API = API_ENDPOINTS.ANALYSIS;
+const PREDICTIONS_API = API_ENDPOINTS.PREDICTIONS;
 
 // Market Data Service APIs
 export const getQuote = async (symbol: string) => {
