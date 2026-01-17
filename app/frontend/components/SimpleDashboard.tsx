@@ -14,7 +14,7 @@ const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) =>
     const checkBackendHealth = async () => {
       try {
         // Test portfolio manager
-        const portfolioResponse = await fetch('/api/portfolio/health');
+        const portfolioResponse = await fetch('/api/v1/portfolio/health');
         if (portfolioResponse.ok) {
           const portfolioData = await portfolioResponse.json();
           setPortfolioHealth(portfolioData);
@@ -22,7 +22,7 @@ const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) =>
         }
 
         // Test market data
-        const marketResponse = await fetch('/api/market-data/health');
+        const marketResponse = await fetch('/api/v1/market-data/health');
         if (marketResponse.ok) {
           const marketData = await marketResponse.json();
           setMarketHealth(marketData);
@@ -161,8 +161,8 @@ const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) =>
           Pruebas de API
         </h3>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => window.open('/api/portfolio/health', '_blank')}
+          <button
+            onClick={() => window.open('/api/v1/portfolio/health', '_blank')}
             style={{
               background: '#3b82f6',
               color: 'white',
@@ -174,8 +174,8 @@ const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) =>
           >
             Test Portfolio API
           </button>
-          <button 
-            onClick={() => window.open('/api/market-data/health', '_blank')}
+          <button
+            onClick={() => window.open('/api/v1/market-data/health', '_blank')}
             style={{
               background: '#10b981',
               color: 'white',

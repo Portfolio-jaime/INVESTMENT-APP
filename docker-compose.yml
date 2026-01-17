@@ -105,31 +105,31 @@ services:
       timeout: 10s
       retries: 3
 
-  # Frontend (React + Vite)
-  frontend:
-    build:
-      context: ./app/frontend
-      dockerfile: ../../Dockerfile.frontend
-      target: development
-    container_name: trii-frontend
-    environment:
-      VITE_API_BASE_URL: http://localhost:8003
-      VITE_MARKET_DATA_URL: http://localhost:8001
-      VITE_APP_TITLE: TRII Investment Platform
-      VITE_DEBUG: true
-    ports:
-      - "3000:3000"
-    depends_on:
-      - portfolio-manager
-      - market-data
-    networks:
-      - trii-network
-    volumes:
-      - ./app/frontend:/app
-      - /app/node_modules
-    restart: unless-stopped
-    stdin_open: true
-    tty: true
+  # Frontend (React + Vite) - commented out for development
+  # frontend:
+  #   build:
+  #     context: ./app/frontend
+  #     dockerfile: ../../Dockerfile.frontend
+  #     target: development
+  #   container_name: trii-frontend
+  #   environment:
+  #     VITE_API_BASE_URL: http://localhost:8003
+  #     VITE_MARKET_DATA_URL: http://localhost:8001
+  #     VITE_APP_TITLE: TRII Investment Platform
+  #     VITE_DEBUG: true
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - portfolio-manager
+  #     - market-data
+  #   networks:
+  #     - trii-network
+  #   volumes:
+  #     - ./app/frontend:/app
+  #     - /app/node_modules
+  #   restart: unless-stopped
+  #   stdin_open: true
+  #   tty: true
 
 volumes:
   postgres_data:
