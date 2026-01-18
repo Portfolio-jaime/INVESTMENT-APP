@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, TrendingDown, RefreshCw, BarChart3, DollarSign, Activity } from 'lucide-react';
 
 interface SimpleDashboardProps {
@@ -9,33 +9,56 @@ const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) =>
   const [portfolioHealth, setPortfolioHealth] = useState<any>(null);
   const [marketHealth, setMarketHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
+  
+  const healthCheckDone = useRef(false);
+  
+  const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(false);
+  
+  const [isLoadingMarket, setIsLoadingMarket] = useState(false);
+  
   useEffect(() => {
     const checkBackendHealth = async () => {
+      if (healthCheckDone.current) return;
+      setLoading(true);
       try {
         // Test portfolio manager
-        const portfolioResponse = await fetch('/api/v1/portfolio/health');
-        if (portfolioResponse.ok) {
-          const portfolioData = await portfolioResponse.json();
-          setPortfolioHealth(portfolioData);
-          addNotification('success', 'Portfolio Manager conectado');
+        setIsLoadingPortfolio(true);
+        try {
+          const portfolioResponse = await fetch('/api/v1/portfolio/health');
+          if (portfolioResponse.ok) {
+            const portfolioData = await portfolioResponse.json();
+            setPortfolioHealth(portfolioData);
+            addNotification('success', 'Portfolio Manager conectado');
+          }
+        } catch (error) {
+          console.error('Portfolio health error:', error);
+        } finally {
+          setIsLoadingPortfolio(false);
         }
-
+  
         // Test market data
-        const marketResponse = await fetch('/api/v1/market-data/health');
-        if (marketResponse.ok) {
-          const marketData = await marketResponse.json();
-          setMarketHealth(marketData);
-          addNotification('success', 'Market Data conectado');
+        setIsLoadingMarket(true);
+        try {
+          const marketResponse = await fetch('/api/v1/market-data/health');
+          if (marketResponse.ok) {
+            const marketData = await marketResponse.json();
+            setMarketHealth(marketData);
+            addNotification('success', 'Market Data conectado');
+          }
+        } catch (error) {
+          console.error('Market health error:', error);
+        } finally {
+          setIsLoadingMarket(false);
         }
       } catch (error) {
         console.error('Error connecting to backends:', error);
         addNotification('error', 'Error conectando con backends');
       } finally {
         setLoading(false);
+        healthCheckDone.current = true;
       }
     };
-
+  
     checkBackendHealth();
   }, [addNotification]);
 
@@ -72,7 +95,12 @@ const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) =>
             <BarChart3 size={24} style={{ color: '#3b82f6', marginRight: '0.5rem' }} />
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Portfolio Manager</h3>
           </div>
-          {portfolioHealth ? (
+          {isLoadingPortfolio ? (
+            <div style={{ textAlign: 'center', padding: '1rem' }}>
+              <RefreshCw className="animate-spin" size={24} />
+              <p>Cargando...</p>
+            </div>
+          ) : portfolioHealth ? (
             <div>
               <p style={{ color: '#10b981', marginBottom: '0.5rem' }}>
                 ✅ Estado: {portfolioHealth.success ? 'Conectado' : 'Error'}
@@ -100,7 +128,12 @@ const SimpleDashboard: React.FC<SimpleDashboardProps> = ({ addNotification }) =>
             <TrendingUp size={24} style={{ color: '#10b981', marginRight: '0.5rem' }} />
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Market Data</h3>
           </div>
-          {marketHealth ? (
+          {isLoadingMarket ? (
+            <div style={{ textAlign: 'center', padding: '1rem' }}>
+              <RefreshCw className="animate-spin" size={24} />
+              <p>Cargando...</p>
+            </div>
+          ) : marketHealth ? (
             <div>
               <p style={{ color: '#10b981', marginBottom: '0.5rem' }}>
                 ✅ Estado: Conectado
