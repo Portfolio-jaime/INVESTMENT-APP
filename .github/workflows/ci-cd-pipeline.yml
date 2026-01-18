@@ -9,6 +9,7 @@ on:
     paths:
       - 'backend/**'
       - 'app/**'
+      - 'apps/**'
       - 'infrastructure/docker/**'
       - 'infrastructure/helm/**'
       - 'infrastructure/argocd/**'
@@ -35,13 +36,8 @@ jobs:
     name: Detect Changed Services
     runs-on: ubuntu-latest
     outputs:
-      market-data: ${{ steps.filter.outputs.market-data }}
-      analysis-engine: ${{ steps.filter.outputs.analysis-engine }}
-      portfolio-manager: ${{ steps.filter.outputs.portfolio-manager }}
-      ml-prediction: ${{ steps.filter.outputs.ml-prediction }}
-      desktop-client: ${{ steps.filter.outputs.desktop-client }}
+      backend: ${{ steps.filter.outputs.backend }}
       frontend-app: ${{ steps.filter.outputs.frontend-app }}
-      landing-page: ${{ steps.filter.outputs.landing-page }}
       infrastructure: ${{ steps.filter.outputs.infrastructure }}
       argocd: ${{ steps.filter.outputs.argocd }}
       infrastructure-base: ${{ steps.filter.outputs.infrastructure-base }}
@@ -57,23 +53,10 @@ jobs:
         id: filter
         with:
           filters: |
-            market-data:
-              - 'backend/market-data/**'
-            analysis-engine:
-              - 'backend/analysis-engine/**'
-            portfolio-manager:
-              - 'backend/portfolio-manager/**'
-            ml-prediction:
-              - 'backend/ml-prediction/**'
-            desktop-client:
-              - 'app/electron/**'
-              - 'apps/desktop-client/**'
+            backend:
+              - 'backend/**'
             frontend-app:
-              - 'app/frontend/**'
-            landing-page:
-              - 'app/frontend/components/LandingPage*'
-              - 'app/frontend/components/LandingPageUtils*'
-              - 'app/frontend/App.tsx'
+              - 'apps/next-frontend/**'
             infrastructure:
               - 'infrastructure/docker/**'
               - 'infrastructure/helm/**'
@@ -178,202 +161,11 @@ jobs:
             fi
           done
 
-  # Build and test Market Data Service
-  build-market-data:
-    name: Build Market Data Service
+  # Build and test Backend Service
+  build-backend:
+    name: Build Backend Service
     needs: detect-changes
-    if: needs.detect-changes.outputs.market-data == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        working-directory: ./backend/market-data
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
-
-      - name: Run tests
-        working-directory: ./backend/market-data
-        run: |
-          echo "🧪 Running market-data tests..."
-          python -m pytest tests/ -v --cov=app --cov-report=term-missing --tb=short || {
-            echo "⚠️ Tests had issues, but continuing..."
-            echo "Test status: $?"
-          }
-
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set short SHA
-        id: vars
-        run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
-
-      - name: Set image tag
-        id: tag
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/market-data
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:${{ steps.tag.outputs.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:buildcache,mode=max
-
-      - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        run: |
-          TAG=${{ steps.tag.outputs.tag }}
-          echo "🏷️ Updating Helm values with tag: $TAG"
-
-          # Verify file exists
-          if [ ! -f "infrastructure/helm/market-data/values.yaml" ]; then
-            echo "❌ values.yaml not found!"
-            exit 1
-          fi
-
-          # Show current tag
-          echo "Current tag:"
-          grep 'tag:' infrastructure/helm/market-data/values.yaml
-
-          # Update tag
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/market-data/values.yaml
-
-          # Show updated tag
-          echo "Updated tag:"
-          grep 'tag:' infrastructure/helm/market-data/values.yaml
-
-          # Git operations
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add infrastructure/helm/market-data/values.yaml
-
-          if git diff --staged --quiet; then
-            echo "No changes detected in values.yaml"
-          else
-            git commit -m "Update market-data image tag to $TAG [skip ci]"
-            git pull --rebase origin ${{ github.ref_name }}
-            git push
-            echo "✅ Helm values updated successfully"
-          fi
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Deployment failed, keeping previous image tag"
-          git checkout HEAD -- infrastructure/helm/market-data/values.yaml
-
-  # Build and test Analysis Engine
-  build-analysis-engine:
-    name: Build Analysis Engine
-    needs: detect-changes
-    if: needs.detect-changes.outputs.analysis-engine == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        working-directory: ./backend/analysis-engine
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
-
-      - name: Run tests
-        working-directory: ./backend/analysis-engine
-        run: |
-          pytest tests/ -v --cov=app --cov-report=term-missing || echo "Tests completed"
-
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set short SHA
-        id: vars
-        run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
-
-      - name: Set image tag
-        id: tag
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/analysis-engine
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:${{ steps.tag.outputs.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:buildcache,mode=max
-
-      - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        run: |
-          TAG=${{ steps.tag.outputs.tag }}
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/analysis-engine/values.yaml
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add infrastructure/helm/analysis-engine/values.yaml
-          git commit -m "Update analysis-engine image tag to $TAG [skip ci]" || echo "No changes to commit"
-          git pull --rebase origin ${{ github.ref_name }}
-          git push
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Deployment failed, keeping previous image tag"
-          git checkout HEAD -- infrastructure/helm/analysis-engine/values.yaml
-
-  # Build and test Portfolio Manager
-  build-portfolio-manager:
-    name: Build Portfolio Manager
-    needs: detect-changes
-    if: needs.detect-changes.outputs.portfolio-manager == 'true'
+    if: needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -385,15 +177,15 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        working-directory: ./backend/portfolio-manager
+        working-directory: ./backend/fastify-backend
         run: npm ci
 
       - name: Run tests
-        working-directory: ./backend/portfolio-manager
+        working-directory: ./backend/fastify-backend
         run: npm test || echo "Tests completed"
 
       - name: Build
-        working-directory: ./backend/portfolio-manager
+        working-directory: ./backend/fastify-backend
         run: npm run build
 
       - name: Set up Docker Buildx
@@ -424,24 +216,24 @@ jobs:
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         uses: docker/build-push-action@v5
         with:
-          context: ./backend/portfolio-manager
+          context: ./backend/fastify-backend
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:${{ steps.tag.outputs.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:buildcache,mode=max
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-backend:${{ steps.tag.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-backend:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-backend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-backend:buildcache,mode=max
 
       - name: Update Helm values
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         run: |
           TAG=${{ steps.tag.outputs.tag }}
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/portfolio-manager/values.yaml
+          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/backend/values.yaml
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add infrastructure/helm/portfolio-manager/values.yaml
-          git commit -m "Update portfolio-manager image tag to $TAG [skip ci]" || echo "No changes to commit"
+          git add infrastructure/helm/backend/values.yaml
+          git commit -m "Update backend image tag to $TAG [skip ci]" || echo "No changes to commit"
           git pull --rebase origin ${{ github.ref_name }}
           git push
 
@@ -449,88 +241,10 @@ jobs:
         if: failure()
         run: |
           echo "Deployment failed, keeping previous image tag"
-          git checkout HEAD -- infrastructure/helm/portfolio-manager/values.yaml
+          git checkout HEAD -- infrastructure/helm/backend/values.yaml
 
-  # Build and test ML Prediction Service
-  build-ml-prediction:
-    name: Build ML Prediction Service
-    needs: detect-changes
-    if: needs.detect-changes.outputs.ml-prediction == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
 
-      - name: Install dependencies
-        working-directory: ./backend/ml-prediction
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
-
-      - name: Run tests
-        working-directory: ./backend/ml-prediction
-        run: |
-          pytest tests/ -v --cov=app --cov-report=term-missing || echo "Tests completed"
-
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set short SHA
-        id: vars
-        run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
-
-      - name: Set image tag
-        id: tag
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/ml-prediction
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:${{ steps.tag.outputs.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:buildcache,mode=max
-
-      - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        run: |
-          TAG=${{ steps.tag.outputs.tag }}
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/ml-prediction/values.yaml
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add infrastructure/helm/ml-prediction/values.yaml
-          git commit -m "Update ml-prediction image tag to $TAG [skip ci]" || echo "No changes to commit"
-          git pull --rebase origin ${{ github.ref_name }}
-          git push
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Deployment failed, keeping previous image tag"
-          git checkout HEAD -- infrastructure/helm/ml-prediction/values.yaml
 
   # Test infrastructure
   test-infrastructure:
@@ -598,16 +312,16 @@ jobs:
           echo "Dockerhub secrets configured: $([ -n '${{ secrets.DOCKERHUB_USERNAME }}' ] && [ -n '${{ secrets.DOCKERHUB_TOKEN }}' ] && echo 'YES' || echo 'NO')"
 
       - name: Check package.json and create lock file if needed
-        working-directory: ./app/frontend
+        working-directory: ./apps/next-frontend
         run: |
           echo "📋 Checking package.json and lock file..."
           if [ ! -f "package.json" ]; then
-            echo "❌ package.json not found in app/frontend"
+            echo "❌ package.json not found in apps/next-frontend"
             exit 1
           fi
-          
+
           echo "✅ package.json found"
-          
+
           if [ ! -f "package-lock.json" ]; then
             echo "⚠️ package-lock.json not found, generating it..."
             npm install --package-lock-only
@@ -621,14 +335,14 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'app/frontend/package-lock.json'
+          cache-dependency-path: 'apps/next-frontend/package-lock.json'
 
       - name: Install dependencies
-        working-directory: ./app/frontend
+        working-directory: ./apps/next-frontend
         run: |
           echo "📦 Installing frontend dependencies..."
           set -e  # Exit on error
-          
+
           # First try npm ci for reliable installs
           if npm ci --prefer-offline --no-audit; then
             echo "✅ npm ci completed successfully"
@@ -639,7 +353,7 @@ jobs:
           fi
 
       - name: Verify installation
-        working-directory: ./app/frontend
+        working-directory: ./apps/next-frontend
         run: |
           echo "🔍 Verifying installation..."
           echo "Node modules exists: $(test -d node_modules && echo 'YES' || echo 'NO')"
@@ -647,7 +361,7 @@ jobs:
           npm list --depth=0 || echo "Package listing completed"
 
       - name: Type check
-        working-directory: ./app/frontend
+        working-directory: ./apps/next-frontend
         run: |
           echo "🔧 Running TypeScript type check..."
           if npm run type-check; then
@@ -658,7 +372,7 @@ jobs:
           fi
 
       - name: Lint code
-        working-directory: ./app/frontend
+        working-directory: ./apps/next-frontend
         run: |
           echo "🔍 Running ESLint..."
           if npm run lint; then
@@ -669,7 +383,7 @@ jobs:
           fi
 
       - name: Run tests
-        working-directory: ./app/frontend
+        working-directory: ./apps/next-frontend
         run: |
           echo "🧪 Running tests..."
           if npm test; then
@@ -680,15 +394,15 @@ jobs:
           fi
 
       - name: Build application
-        working-directory: ./app/frontend
+        working-directory: ./apps/next-frontend
         run: |
           echo "🏗️ Building frontend application..."
           set -e  # Exit on error
-          
+
           if npm run build; then
             echo "✅ Build completed successfully"
             echo "📊 Build output:"
-            ls -la dist/ || echo "No dist directory found"
+            ls -la .next/ || echo "No .next directory found"
           else
             echo "❌ Build failed"
             exit 1
@@ -865,70 +579,6 @@ jobs:
           echo "Helm update: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && steps.docker-check.outputs.has-credentials == 'true' && 'YES' || 'NO' }}"
           echo "=================="
 
-  # Build and test Desktop Client
-  build-desktop-client:
-    name: Build Desktop Client
-    needs: detect-changes
-    if: needs.detect-changes.outputs.desktop-client == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set short SHA
-        id: vars
-        run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
-
-      - name: Set image tag
-        id: tag
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/desktop-client
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:${{ steps.tag.outputs.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:buildcache,mode=max
-
-      - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
-        run: |
-          TAG=${{ steps.tag.outputs.tag }}
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/desktop-client/values.yaml
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add infrastructure/helm/desktop-client/values.yaml
-          git commit -m "Update desktop-client image tag to $TAG [skip ci]" || echo "No changes to commit"
-          git pull --rebase origin ${{ github.ref_name }}
-          git push
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Deployment failed, keeping previous image tag"
-          git checkout HEAD -- infrastructure/helm/desktop-client/values.yaml
 
   # Update ArgoCD configurations
   update-argocd:
@@ -1037,13 +687,9 @@ jobs:
     name: Update ArgoCD Image Tags
     needs:
       - detect-changes
-      - build-market-data
-      - build-analysis-engine
-      - build-portfolio-manager
-      - build-ml-prediction
+      - build-backend
       - build-frontend-app
-      - build-desktop-client
-    if: always() && (needs.build-market-data.result == 'success' || needs.build-analysis-engine.result == 'success' || needs.build-portfolio-manager.result == 'success' || needs.build-ml-prediction.result == 'success' || needs.build-frontend-app.result == 'success')
+    if: always() && (needs.build-backend.result == 'success' || needs.build-frontend-app.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -1054,7 +700,14 @@ jobs:
       - name: Update ArgoCD Application Image Tags
         run: |
           echo "🏷️ Updating ArgoCD application image tags to commit ${{ github.sha }}"
-          
+
+          # Update Backend
+          if [[ "${{ needs.build-backend.result }}" == "success" ]]; then
+            echo "🔧 Updating backend image tag..."
+            sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/backend-app.yaml
+            echo "✅ Backend updated to ${{ github.sha }}"
+          fi
+
           # Update Frontend App
           if [[ "${{ needs.build-frontend-app.result }}" == "success" ]]; then
             echo "📱 Updating frontend-app image tag..."
@@ -1062,60 +715,21 @@ jobs:
             echo "✅ Frontend app updated to ${{ github.sha }}"
           fi
 
-          # Update Desktop Client
-          if [[ "${{ needs.build-desktop-client.result }}" == "success" ]]; then
-            echo "💻 Updating desktop-client image tag..."
-            sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/desktop-client-app.yaml
-            echo "✅ Desktop client updated to ${{ github.sha }}"
-          fi
-          
-          # Update Market Data Service
-          if [[ "${{ needs.build-market-data.result }}" == "success" ]]; then
-            echo "📊 Updating market-data image tag..."
-            sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/market-data-app.yaml
-            echo "✅ Market data updated to ${{ github.sha }}"
-          fi
-          
-          # Update Analysis Engine
-          if [[ "${{ needs.build-analysis-engine.result }}" == "success" ]]; then
-            echo "🧠 Updating analysis-engine image tag..."
-            sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/analysis-engine-app.yaml
-            echo "✅ Analysis engine updated to ${{ github.sha }}"
-          fi
-          
-          # Update Portfolio Manager
-          if [[ "${{ needs.build-portfolio-manager.result }}" == "success" ]]; then
-            echo "💼 Updating portfolio-manager image tag..."
-            sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/portfolio-manager-app.yaml
-            echo "✅ Portfolio manager updated to ${{ github.sha }}"
-          fi
-          
-          # Update ML Prediction Service
-          if [[ "${{ needs.build-ml-prediction.result }}" == "success" ]]; then
-            echo "🤖 Updating ml-prediction image tag..."
-            sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/ml-prediction-app.yaml
-            echo "✅ ML prediction updated to ${{ github.sha }}"
-          fi
-
       - name: Commit updated ArgoCD configurations
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           if git diff --quiet; then
             echo "ℹ️ No changes to commit"
           else
             git add infrastructure/argocd/
             git commit -m "🏷️ Update image tags to ${{ github.sha }}
-            
+
             Auto-updated by CI/CD pipeline:
+            - Backend: ${{ needs.build-backend.result }}
             - Frontend App: ${{ needs.build-frontend-app.result }}
-            - Desktop Client: ${{ needs.build-desktop-client.result }}
-            - Market Data: ${{ needs.build-market-data.result }}
-            - Analysis Engine: ${{ needs.build-analysis-engine.result }}
-            - Portfolio Manager: ${{ needs.build-portfolio-manager.result }}
-            - ML Prediction: ${{ needs.build-ml-prediction.result }}
-            
+
             Commit: ${{ github.sha }}"
             git push
             echo "✅ ArgoCD configurations updated and committed"
@@ -1127,12 +741,8 @@ jobs:
     if: always()
     needs:
       - detect-changes
-      - build-market-data
-      - build-analysis-engine
-      - build-portfolio-manager
-      - build-ml-prediction
+      - build-backend
       - build-frontend-app
-      - build-desktop-client
       - update-argocd
       - test-infrastructure
     steps:
@@ -1142,12 +752,8 @@ jobs:
           echo "======================================"
           echo ""
           echo "📊 Change Detection:"
-          echo "  - Market Data: ${{ needs.detect-changes.outputs.market-data }}"
-          echo "  - Analysis Engine: ${{ needs.detect-changes.outputs.analysis-engine }}"
-          echo "  - Portfolio Manager: ${{ needs.detect-changes.outputs.portfolio-manager }}"
-          echo "  - ML Prediction: ${{ needs.detect-changes.outputs.ml-prediction }}"
+          echo "  - Backend: ${{ needs.detect-changes.outputs.backend }}"
           echo "  - Frontend App: ${{ needs.detect-changes.outputs.frontend-app }}"
-          echo "  - Desktop Client: ${{ needs.detect-changes.outputs.desktop-client }}"
           echo "  - Infrastructure: ${{ needs.detect-changes.outputs.infrastructure }}"
           echo "  - Infrastructure Base: ${{ needs.detect-changes.outputs.infrastructure-base }}"
           echo "  - Infrastructure Helm: ${{ needs.detect-changes.outputs.infrastructure-helm }}"
@@ -1156,12 +762,8 @@ jobs:
           echo "  - Scripts: ${{ needs.detect-changes.outputs.scripts }}"
           echo ""
           echo "🔧 Build Results:"
-          echo "  - Market Data: ${{ needs.build-market-data.result }}"
-          echo "  - Analysis Engine: ${{ needs.build-analysis-engine.result }}"
-          echo "  - Portfolio Manager: ${{ needs.build-portfolio-manager.result }}"
-          echo "  - ML Prediction: ${{ needs.build-ml-prediction.result }}"
+          echo "  - Backend: ${{ needs.build-backend.result }}"
           echo "  - Frontend App: ${{ needs.build-frontend-app.result }}"
-          echo "  - Desktop Client: ${{ needs.build-desktop-client.result }}"
           echo "  - ArgoCD Update: ${{ needs.update-argocd.result }}"
           echo "  - Infrastructure: ${{ needs.test-infrastructure.result }}"
           echo ""
@@ -1169,17 +771,13 @@ jobs:
           echo "📦 Complete Kubernetes cluster with ArgoCD GitOps"
           echo "📊 Prometheus + Grafana monitoring stack deployed"
           echo "🎨 Modern React frontend with gradient UI design"
-          echo "🧠 ML Prediction service with PVC storage (5Gi models + 2Gi data)"
+          echo "🔧 Fastify backend service"
           echo "🌟 Colombian investment platform ready for production"
           echo "🔒 Security: SSL/TLS, RBAC, service mesh ready"
-          echo "📈 All services: Frontend, Analysis Engine, Market Data, ML, Portfolio Manager"
-          
-          if [[ "${{ needs.build-market-data.result }}" == "failure" ||
-                "${{ needs.build-analysis-engine.result }}" == "failure" ||
-                "${{ needs.build-portfolio-manager.result }}" == "failure" ||
-                "${{ needs.build-ml-prediction.result }}" == "failure" ||
+          echo "📈 Services: Frontend, Backend"
+
+          if [[ "${{ needs.build-backend.result }}" == "failure" ||
                 "${{ needs.build-frontend-app.result }}" == "failure" ||
-                "${{ needs.build-desktop-client.result }}" == "failure" ||
                 "${{ needs.update-argocd.result }}" == "failure" ||
                 "${{ needs.test-infrastructure.result }}" == "failure" ]]; then
             echo "❌ Some builds failed, review logs for details"
