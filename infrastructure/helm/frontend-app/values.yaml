@@ -36,10 +36,6 @@ ingress:
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($request_uri ~ ^/api/(.+)$ && $request_uri !~ ^/api/.+/$) {
-        return 301 $scheme://$host$request_uri/;
-      }
   hosts:
     - host: app.trii-platform.local
       paths:
