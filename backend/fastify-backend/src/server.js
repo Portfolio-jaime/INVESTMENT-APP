@@ -1,6 +1,7 @@
 const fastify = require('fastify')({ logger: true });
 
 // Trigger CI/CD build
+// Small change to trigger pipeline
 // Register plugins
 fastify.register(require('@fastify/cors'), {
   origin: true

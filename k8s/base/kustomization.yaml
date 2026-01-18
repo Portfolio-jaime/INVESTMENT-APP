@@ -9,5 +9,6 @@ resources:
   - postgres-service.yaml
   - backend-deployment.yaml
   - backend-service.yaml
+  - backend-ingress.yaml
   - frontend-deployment.yaml
   - frontend-service.yaml
