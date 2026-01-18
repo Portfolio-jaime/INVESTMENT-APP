@@ -3,3 +3,4 @@ packages:
   - 'services/*'
   - 'libs/*'
   - 'app/frontend'
+  - 'backend/*'

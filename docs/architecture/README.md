@@ -1,460 +1,272 @@
-# Arquitectura del Sistema TRII Platform
+# TRII Platform - System Architecture
 
-## 🏗️ Visión General
+## Overview
 
-TRII Platform está diseñada siguiendo principios de **arquitectura de microservicios**, **domain-driven design** y **event-driven architecture** para garantizar escalabilidad, mantenibilidad y alta disponibilidad.
+The TRII Investment Decision Support Platform is built as a modern microservices architecture designed for desktop deployment with enterprise-grade reliability and performance. The system combines real-time market data processing, AI-powered analysis, and a professional desktop user experience.
 
-## 🎯 Principios Arquitectónicos
-
-### 1. **Separation of Concerns**
-- Cada microservicio tiene una responsabilidad específica
-- Boundaries claros entre dominios de negocio
-- APIs bien definidas entre servicios
-
-### 2. **Event-Driven Architecture**
-- Comunicación asíncrona via RabbitMQ
-- Event sourcing para auditabilidad
-- CQRS para separar lecturas y escrituras
-
-### 3. **Cloud-Native**
-- Containerización con Docker
-- Orquestación con Kubernetes  
-- Observabilidad integrada
-- Auto-scaling horizontal
-
-## 🏛️ Diagrama de Arquitectura de Alto Nivel
+## High-Level Architecture
 
 ```mermaid
 graph TB
-    subgraph "🌐 External"
-        USER[👥 Users]
-        MARKET[📈 Market APIs]
-        NEWS[📰 News APIs]
+    subgraph "User Layer"
+        DC[Desktop Client<br/>Electron + React]
     end
 
-    subgraph "🛡️ Edge Layer"
-        CDN[🌍 CloudFlare CDN]
-        WAF[🔒 WAF]
-        LB[⚖️ Load Balancer]
+    subgraph "API Gateway Layer"
+        AG[API Gateway<br/>Nginx/Ingress]
     end
 
-    subgraph "🚪 API Gateway"
-        KONG[🦍 Kong Gateway]
-        AUTH[🔐 Auth Service]
-        RATE[🚦 Rate Limiting]
+    subgraph "Microservices Layer"
+        MD[Market Data Service<br/>FastAPI/Python]
+        AE[Analysis Engine<br/>FastAPI/Python]
+        PM[Portfolio Manager<br/>NestJS/TypeScript]
+        MLP[ML Prediction Service<br/>FastAPI/Python]
     end
 
-    subgraph "🎯 Frontend Layer"
-        WEB[💻 React Web App]
-        MOBILE[📱 React Native]
-        DESKTOP[🖥️ Electron App]
+    subgraph "Data Layer"
+        PG[(PostgreSQL<br/>Primary Database)]
+        TS[(TimescaleDB<br/>Time Series)]
+        REDIS[(Redis<br/>Cache & Sessions)]
+        RMQ[(RabbitMQ<br/>Message Queue)]
     end
 
-    subgraph "⚙️ Core Services"
-        MARKET_SVC[📊 Market Data Service]
-        ANALYSIS_SVC[🔍 Analysis Engine]
-        ML_SVC[🤖 ML Prediction Service]
-        PORTFOLIO_SVC[💼 Portfolio Manager]
-        NOTIFICATION_SVC[📢 Notification Service]
-        USER_SVC[👤 User Service]
+    subgraph "Infrastructure Layer"
+        K8S[Kubernetes Cluster]
+        ARGO[ArgoCD<br/>GitOps]
+        MONITOR[Monitoring Stack<br/>Prometheus + Grafana]
     end
 
-    subgraph "💾 Data Layer"
-        PG[(🗄️ PostgreSQL)]
-        TS[(📈 TimescaleDB)]
-        REDIS[(⚡ Redis)]
-        S3[(☁️ Object Storage)]
-    end
+    DC --> AG
+    AG --> MD
+    AG --> AE
+    AG --> PM
+    AG --> MLP
 
-    subgraph "📡 Message Layer"
-        RABBIT[🐰 RabbitMQ]
-        KAFKA[📨 Apache Kafka]
-    end
+    MD --> PG
+    MD --> TS
+    AE --> PG
+    AE --> TS
+    PM --> PG
+    MLP --> PG
+    MLP --> TS
 
-    subgraph "📊 Observability"
-        PROM[📈 Prometheus]
-        GRAF[📊 Grafana]
-        JAEGER[🔍 Jaeger]
-        LOGS[📝 Loki]
-    end
+    MD --> REDIS
+    AE --> REDIS
+    PM --> REDIS
 
-    USER --> CDN
-    CDN --> WAF
-    WAF --> LB
-    LB --> KONG
-    KONG --> AUTH
-    KONG --> WEB
-    KONG --> MOBILE
-    KONG --> DESKTOP
+    PM --> RMQ
 
-    WEB --> MARKET_SVC
-    WEB --> ANALYSIS_SVC
-    WEB --> ML_SVC
-    WEB --> PORTFOLIO_SVC
-
-    MARKET_SVC --> PG
-    MARKET_SVC --> TS
-    MARKET_SVC --> REDIS
-    MARKET_SVC --> RABBIT
-
-    ANALYSIS_SVC --> REDIS
-    ANALYSIS_SVC --> RABBIT
-    
-    ML_SVC --> PG
-    ML_SVC --> S3
-    ML_SVC --> KAFKA
-
-    PORTFOLIO_SVC --> PG
-    PORTFOLIO_SVC --> RABBIT
-
-    MARKET --> MARKET_SVC
-    NEWS --> ANALYSIS_SVC
-
-    PROM --> GRAF
-    JAEGER --> GRAF
-    LOGS --> GRAF
+    K8S --> ARGO
+    MONITOR --> K8S
 ```
 
-## 🔧 Arquitectura de Microservicios
+## Component Details
 
-### 📊 Market Data Service
-**Responsabilidades:**
-- Ingesta de datos de mercado en tiempo real
-- Normalización de datos de múltiples fuentes
-- Cache distribuido de cotizaciones
-- WebSocket streams para clientes
+### Desktop Client
 
-**Tecnologías:**
-- FastAPI + AsyncIO para alta concurrencia
-- TimescaleDB para series temporales
-- Redis para cache L1
-- WebSockets para streaming
+**Technology**: Electron 28 + React 18 + TypeScript
+**Purpose**: Cross-platform desktop application providing the user interface
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MarketData
-    participant Cache
-    participant TimescaleDB
-    participant ExternalAPI
+**Key Components**:
+- **Main Process**: Electron main process handling system integration
+- **Renderer Process**: React application with modern UI
+- **State Management**: Zustand for client-side state
+- **Backend Manager**: Handles communication with microservices
 
-    Client->>MarketData: GET /quotes/AAPL
-    MarketData->>Cache: Check cache
-    alt Cache Hit
-        Cache-->>MarketData: Return cached data
-    else Cache Miss
-        MarketData->>TimescaleDB: Query latest data
-        TimescaleDB-->>MarketData: Return data
-        MarketData->>Cache: Update cache
-    end
-    MarketData-->>Client: Return quote
-    
-    par Background Process
-        MarketData->>ExternalAPI: Fetch latest data
-        ExternalAPI-->>MarketData: Market data
-        MarketData->>TimescaleDB: Insert data
-        MarketData->>Cache: Update cache
-    end
-```
+**Responsibilities**:
+- User interface and experience
+- Local data storage and caching
+- Service lifecycle management
+- Real-time data synchronization
 
-### 🔍 Analysis Engine
-**Responsabilidades:**
-- Análisis técnico avanzado (RSI, MACD, Bollinger Bands)
-- Procesamiento de sentiment de noticias
-- Cálculo de indicadores personalizados
-- Backtesting de estrategias
+### Microservices
 
-**Patrón de Arquitectura:** **Pipeline Pattern**
+#### Market Data Service
+- **Framework**: FastAPI (Python)
+- **Purpose**: Real-time market data aggregation and serving
+- **Key Features**:
+  - Live price feeds
+  - Historical data retrieval
+  - Market data normalization
+  - Rate limiting and caching
 
-```mermaid
-graph LR
-    subgraph "📥 Data Ingestion"
-        A[Market Data] --> B[Data Validator]
-        C[News Data] --> B
-    end
-    
-    subgraph "🔄 Processing Pipeline"
-        B --> D[Technical Indicators]
-        B --> E[Sentiment Analysis]
-        D --> F[Signal Generator]
-        E --> F
-    end
-    
-    subgraph "📤 Output"
-        F --> G[Analysis Results]
-        F --> H[Event Publisher]
-    end
+#### Analysis Engine
+- **Framework**: FastAPI (Python)
+- **Purpose**: Technical analysis and financial calculations
+- **Key Features**:
+  - Technical indicators (RSI, MACD, Bollinger Bands)
+  - Chart pattern recognition
+  - Statistical analysis
+  - Real-time calculations
 
-    style D fill:#e1f5fe
-    style E fill:#f3e5f5
-    style F fill:#e8f5e8
-```
+#### Portfolio Manager
+- **Framework**: NestJS (TypeScript)
+- **Purpose**: Portfolio tracking and management
+- **Key Features**:
+  - Position tracking
+  - Transaction management
+  - Performance calculations
+  - Risk assessment
 
-### 🤖 ML Prediction Service
-**Responsabilidades:**
-- Entrenamiento de modelos predictivos
-- Inferencia en tiempo real
-- A/B testing de modelos
-- Feature engineering
+#### ML Prediction Service
+- **Framework**: FastAPI (Python)
+- **Purpose**: AI/ML-powered investment insights
+- **Key Features**:
+  - Price prediction models
+  - Anomaly detection
+  - Sentiment analysis
+  - Recommendation engine
 
-**Arquitectura ML:**
+### Data Architecture
 
-```mermaid
-graph TD
-    subgraph "📊 Data Pipeline"
-        RAW[Raw Data] --> CLEAN[Data Cleaning]
-        CLEAN --> FEAT[Feature Engineering]
-        FEAT --> SPLIT[Train/Val/Test Split]
-    end
+#### PostgreSQL (Primary Database)
+**Purpose**: Main application data storage
+**Key Tables**:
+- `users` - User accounts and profiles
+- `portfolios` - Investment portfolios
+- `positions` - Current holdings
+- `transactions` - Buy/sell operations
+- `watchlist` - User watchlists
+- `alerts` - Price and signal alerts
+- `recommendations` - AI-generated recommendations
 
-    subgraph "🧠 Model Training"
-        SPLIT --> TRAIN[Model Training]
-        TRAIN --> VAL[Validation]
-        VAL --> TUNE[Hyperparameter Tuning]
-        TUNE --> SELECT[Model Selection]
-    end
+#### TimescaleDB (Time Series)
+**Purpose**: High-performance time series data
+**Key Tables**:
+- `quotes` - Real-time price quotes
+- `historical_prices` - OHLCV historical data
+- `audit_log` - System audit trail
 
-    subgraph "🚀 Deployment"
-        SELECT --> STAGE[Staging Environment]
-        STAGE --> AB[A/B Testing]
-        AB --> PROD[Production Deployment]
-    end
+#### Redis (Cache & Sessions)
+**Purpose**: High-speed caching and session management
+**Usage**:
+- Market data caching
+- Session storage
+- Real-time data buffering
+- Rate limiting
 
-    subgraph "📈 Monitoring"
-        PROD --> DRIFT[Drift Detection]
-        DRIFT --> RETRAIN[Retrain Trigger]
-        RETRAIN --> TRAIN
-    end
+#### RabbitMQ (Message Queue)
+**Purpose**: Asynchronous message processing
+**Usage**:
+- Inter-service communication
+- Background job processing
+- Event-driven architecture
 
-    style TRAIN fill:#bbdefb
-    style PROD fill:#c8e6c9
-    style DRIFT fill:#ffcdd2
-```
+### Infrastructure Components
 
-### 💼 Portfolio Manager
-**Responsabilidades:**
-- Optimización de portafolios
-- Gestión de riesgo
-- Rebalanceo automático
-- Reporting de performance
+#### Kubernetes
+**Deployment Strategy**: Microservices deployed as separate pods
+**Key Features**:
+- Auto-scaling based on load
+- Rolling updates with zero downtime
+- Resource limits and quotas
+- Health checks and self-healing
 
-**Patrón:** **Strategy Pattern** para algoritmos de optimización
+#### ArgoCD
+**GitOps Implementation**:
+- Declarative deployment manifests
+- Automated synchronization
+- Rollback capabilities
+- Multi-environment support
 
-## 🗄️ Arquitectura de Datos
+#### Monitoring Stack
+**Components**:
+- **Prometheus**: Metrics collection and alerting
+- **Grafana**: Visualization and dashboards
+- **Loki**: Log aggregation and querying
+- **AlertManager**: Alert routing and management
 
-### Modelo de Datos Principal
+## Communication Patterns
 
-```mermaid
-erDiagram
-    USERS ||--o{ PORTFOLIOS : owns
-    USERS {
-        uuid id PK
-        string email UK
-        string password_hash
-        jsonb preferences
-        timestamp created_at
-        timestamp updated_at
-        enum status
-    }
+### Synchronous Communication
+- REST APIs between desktop client and microservices
+- Direct database queries for complex aggregations
+- Real-time WebSocket connections for live data
 
-    PORTFOLIOS ||--o{ POSITIONS : contains
-    PORTFOLIOS {
-        uuid id PK
-        uuid user_id FK
-        string name
-        decimal total_value
-        decimal cash_balance
-        jsonb allocation_target
-        timestamp created_at
-    }
+### Asynchronous Communication
+- RabbitMQ for inter-service messaging
+- Event-driven updates for portfolio changes
+- Background processing for ML model training
 
-    POSITIONS ||--|| INSTRUMENTS : references
-    POSITIONS {
-        uuid id PK
-        uuid portfolio_id FK
-        uuid instrument_id FK
-        decimal quantity
-        decimal avg_cost
-        decimal current_value
-        timestamp opened_at
-    }
+## Security Architecture
 
-    INSTRUMENTS {
-        uuid id PK
-        string symbol UK
-        string name
-        enum type
-        string exchange
-        jsonb metadata
-    }
+### Authentication & Authorization
+- JWT-based authentication
+- Role-based access control (RBAC)
+- API key management for external services
 
-    MARKET_DATA {
-        uuid instrument_id FK
-        timestamp timestamp PK
-        decimal price
-        decimal volume
-        decimal high
-        decimal low
-        decimal open
-    }
+### Data Protection
+- End-to-end encryption for sensitive data
+- Database-level encryption
+- Secure communication via TLS/HTTPS
 
-    PREDICTIONS {
-        uuid id PK
-        uuid instrument_id FK
-        timestamp forecast_date
-        decimal predicted_price
-        decimal confidence
-        string model_version
-        jsonb features
-    }
+### Network Security
+- Service mesh with mutual TLS
+- Network policies in Kubernetes
+- API rate limiting and throttling
 
-    TRADES {
-        uuid id PK
-        uuid portfolio_id FK
-        uuid instrument_id FK
-        enum type
-        decimal quantity
-        decimal price
-        decimal fees
-        timestamp executed_at
-    }
+## Deployment Architecture
 
-    INSTRUMENTS ||--o{ MARKET_DATA : has
-    INSTRUMENTS ||--o{ PREDICTIONS : has
-    PORTFOLIOS ||--o{ TRADES : executes
-```
+### Development Environment
+- Docker Compose for local development
+- Hot reloading for frontend development
+- Shared volumes for data persistence
 
-### 📊 Particionamiento de TimescaleDB
+### Production Environment
+- Kubernetes cluster deployment
+- ArgoCD for continuous deployment
+- Multi-zone availability
+- Automated scaling and failover
 
-```sql
--- Particionamiento por tiempo para market_data
-CREATE TABLE market_data (
-    instrument_id UUID NOT NULL,
-    timestamp TIMESTAMPTZ NOT NULL,
-    price DECIMAL(20,8) NOT NULL,
-    volume DECIMAL(20,8),
-    high DECIMAL(20,8),
-    low DECIMAL(20,8),
-    open DECIMAL(20,8)
-);
+### Binary Distribution
+- Electron Builder for cross-platform binaries
+- Auto-update mechanism
+- Code signing for security
+- Installer packages for each platform
 
--- Convertir a hypertable con particionamiento por tiempo
-SELECT create_hypertable('market_data', 'timestamp', chunk_time_interval => INTERVAL '1 day');
+## Performance Characteristics
 
--- Crear índices optimizados
-CREATE INDEX idx_market_data_instrument_time ON market_data (instrument_id, timestamp DESC);
-CREATE INDEX idx_market_data_timestamp ON market_data (timestamp DESC);
-```
+### Scalability
+- Horizontal scaling of microservices
+- Database read replicas
+- CDN for static assets
+- Caching layers for performance
 
-## 🚦 Patrones de Comunicación
+### Reliability
+- Circuit breakers for fault tolerance
+- Retry mechanisms with exponential backoff
+- Graceful degradation under load
+- Comprehensive error handling
 
-### 1. **Synchronous Communication** (REST APIs)
-```yaml
-Pattern: Request-Response
-Use Case: Client-facing APIs, real-time queries
-Technology: HTTP/REST with OpenAPI specs
-Timeout: 30 seconds max
-```
+### Monitoring
+- Application Performance Monitoring (APM)
+- Distributed tracing
+- Log aggregation and correlation
+- Real-time alerting
 
-### 2. **Asynchronous Communication** (Events)
-```yaml
-Pattern: Publish-Subscribe
-Use Case: Inter-service communication, data updates
-Technology: RabbitMQ with topic exchanges
-Delivery: At-least-once with idempotency
-```
+## Data Flow Examples
 
-### 3. **Streaming Communication** (Real-time)
-```yaml
-Pattern: WebSocket/Server-Sent Events
-Use Case: Live market data, notifications
-Technology: WebSockets with Redis pub/sub
-Scaling: Horizontal with sticky sessions
-```
+### Real-Time Quote Update
+1. Market data provider → Market Data Service
+2. Service processes and stores in TimescaleDB
+3. Redis cache updated for fast access
+4. WebSocket push to connected desktop clients
+5. Client updates UI in real-time
 
-## 🔐 Seguridad por Capas
+### Portfolio Analysis
+1. User requests analysis → Desktop Client
+2. Request routed to Analysis Engine via API Gateway
+3. Engine queries historical data from TimescaleDB
+4. Technical indicators calculated
+5. ML predictions fetched from ML Prediction Service
+6. Results aggregated and returned to client
 
-```mermaid
-graph TD
-    subgraph "🛡️ Security Layers"
-        L1[🌐 Network Security]
-        L2[🚪 Authentication]
-        L3[🔑 Authorization]
-        L4[🔒 Data Encryption]
-        L5[📝 Audit & Monitoring]
-    end
+### Transaction Processing
+1. User submits trade → Desktop Client
+2. Request sent to Portfolio Manager
+3. Transaction validated and stored in PostgreSQL
+4. Position updated in real-time
+5. Event published to RabbitMQ for downstream processing
+6. Analysis Engine notified for portfolio rebalancing
 
-    L1 --> |TLS 1.3, WAF| L2
-    L2 --> |OAuth 2.0, MFA| L3
-    L3 --> |RBAC, ABAC| L4
-    L4 --> |AES-256, PKI| L5
-    L5 --> |SOC, SIEM| COMPLIANCE[📋 Compliance]
-
-    style L1 fill:#ffebee
-    style L2 fill:#e8f5e8
-    style L3 fill:#e3f2fd
-    style L4 fill:#fce4ec
-    style L5 fill:#fff3e0
-```
-
-## 📈 Estrategia de Escalabilidad
-
-### Horizontal Scaling
-- **Stateless services**: Todos los microservicios son stateless
-- **Load balancing**: NGINX + Kong Gateway
-- **Auto-scaling**: HPA basado en CPU/memoria/custom metrics
-- **Database sharding**: Particionamiento por user_id
-
-### Vertical Scaling
-- **Resource optimization**: Profiling continuo de servicios
-- **Caching layers**: L1 (Redis), L2 (CDN), L3 (Application)
-- **Connection pooling**: PgBouncer para PostgreSQL
-- **Query optimization**: Índices optimizados, query analysis
-
-## 🔄 DevOps y CI/CD
-
-```mermaid
-gitGraph:
-    options:
-        showBranch: true
-        showCommitLabel: true
-    commit id: "Initial"
-    branch develop
-    checkout develop
-    commit id: "Feature A"
-    commit id: "Feature B"
-    checkout main
-    merge develop id: "Release v1.1"
-    branch hotfix
-    checkout hotfix
-    commit id: "Critical Fix"
-    checkout main
-    merge hotfix id: "Hotfix v1.1.1"
-```
-
-### Pipeline Stages
-1. **🔍 Code Quality**: ESLint, Prettier, SonarQube
-2. **🧪 Testing**: Unit, Integration, E2E tests
-3. **🔒 Security**: SAST, DAST, dependency scanning
-4. **📦 Build**: Docker images, Helm charts
-5. **🚀 Deploy**: Staging → Production via ArgoCD
-6. **📊 Monitor**: Synthetic tests, alerts
-
-## 🎯 SLAs y Métricas
-
-### Service Level Objectives (SLOs)
-- **Availability**: 99.9% uptime (8.77 hours downtime/year)
-- **Latency**: p95 < 200ms para APIs críticas
-- **Throughput**: 10,000 requests/second sostenidas
-- **Data Freshness**: Market data < 100ms delay
-
-### Key Performance Indicators (KPIs)
-- **MTTR** (Mean Time To Recovery): < 15 minutes
-- **MTTD** (Mean Time To Detection): < 2 minutes
-- **Error Rate**: < 0.1% para operaciones críticas
-- **Customer Satisfaction**: NPS > 70
-
----
-
-**Última actualización**: Enero 2026  
-**Versión**: 2.1.0
+This architecture provides a robust, scalable, and maintainable foundation for the TRII investment platform, designed to handle the complex requirements of real-time financial data processing and AI-powered investment analysis.

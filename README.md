@@ -1,261 +1,306 @@
-# TRII Platform - Inversiones Inteligentes con IA
+# TRII Investment Decision Support Platform
 
-> **🚀 Plataforma de inversiones diseñada para colombianos, potenciada por Inteligencia Artificial**
+> **🚀 Professional Desktop Application for Real-Time Market Analysis and Investment Decision Making**
 
-[![CI/CD Pipeline](https://github.com/user/trii-platform/workflows/CI/badge.svg)](https://github.com/user/trii-platform/actions)
+[![CI/CD Pipeline](https://github.com/your-org/investment-app/workflows/CI/badge.svg)](https://github.com/your-org/investment-app/actions)
 [![Infrastructure](https://img.shields.io/badge/Infrastructure-Kubernetes-blue)](https://kubernetes.io/)
 [![AI/ML](https://img.shields.io/badge/AI%2FML-PyTorch-orange)](https://pytorch.org/)
-[![License](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
+[![License](https://img.shields.io/badge/License-Private-red)](LICENSE)
 
-TRII es una plataforma completa de inversiones que combina análisis de mercado en tiempo real, predicciones de IA y una experiencia de usuario excepcional para democratizar las inversiones inteligentes en Colombia.
+TRII is a professional-grade desktop application designed for **real-time market analysis and investment decision making**. Built with modern microservices architecture, it provides investors with comprehensive tools for portfolio management, technical analysis, and AI-powered insights.
 
-## ✨ Características Principales
+## ✨ Key Features
 
-### 🤖 Inteligencia Artificial Avanzada
-- **Predicciones ML**: Modelos entrenados con datos históricos del mercado colombiano
-- **Análisis de Sentimientos**: Procesamiento de noticias financieras en tiempo real  
-- **Optimización de Portafolio**: Algoritmos de balanceo automático
-- **Detección de Anomalías**: Identificación temprana de oportunidades y riesgos
+### 🤖 AI-Powered Analysis
+- **Machine Learning Predictions**: ML models trained on historical market data
+- **Technical Indicators**: RSI, MACD, Bollinger Bands, and advanced indicators
+- **Portfolio Optimization**: Automated rebalancing algorithms
+- **Anomaly Detection**: Early identification of opportunities and risks
 
-### 📊 Análisis de Mercado
-- **Datos en Tiempo Real**: Integración con principales exchanges y mercados
-- **Indicadores Técnicos**: RSI, MACD, Bollinger Bands, y más
-- **Análisis Fundamental**: Ratios financieros y métricas de valoración
-- **Mercados Colombianos**: Especialización en BVC y TRM
+### 📊 Real-Time Market Data
+- **Live Quotes**: Real-time market data and price feeds
+- **Historical Data**: Time-series data with TimescaleDB optimization
+- **Portfolio Tracking**: Comprehensive position and performance monitoring
+- **Watchlist Management**: Custom symbol tracking and alerts
 
-### 🛡️ Seguridad y Compliance
-- **Regulación SFC**: Cumplimiento con normativas colombianas
-- **Encriptación E2E**: Protección de datos financieros
-- **Auditoría Completa**: Logs de todas las transacciones
-- **Autenticación Multi-Factor**: Seguridad bancaria de nivel enterprise
+### 🛡️ Enterprise Security
+- **Local Data Storage**: All data stays on user's machine
+- **Encrypted Storage**: Secure local database and configuration
+- **Audit Logging**: Complete transaction and activity logs
+- **Privacy-First**: No cloud dependency for core functionality
 
-### 📱 Experiencia de Usuario
-- **Interfaz Moderna**: Diseño intuitivo y responsivo
-- **Dashboard Personalizado**: Métricas relevantes para cada usuario
-- **Alertas Inteligentes**: Notificaciones basadas en IA
-- **Acceso Multi-Plataforma**: Web, mobile y desktop
+### 💻 Professional Desktop Experience
+- **Cross-Platform**: Windows, macOS, and Linux support
+- **Modern UI**: React-based interface with dark mode
+- **Real-Time Updates**: Live data synchronization
+- **Offline Capable**: Core functionality works without internet
 
-## 🚀 Acceso Rápido
+## 🚀 Quick Start
 
-### Para Usuarios
+### For End Users (Future Release)
+
+**v1.0.0 Release** (Planned: Q1 2025):
+
 ```bash
-# Abrir la plataforma TRII
-curl -sSL https://trii.co/install | bash
+# Download installer for your platform
+# Windows: TRII-Platform-Setup-1.0.0.exe
+# macOS: TRII-Platform-1.0.0.dmg
+# Linux: TRII-Platform-1.0.0.AppImage
+
+# Run installer and follow setup wizard
+# Application auto-starts backend services
 ```
 
-### Para Desarrolladores
+### For Developers
+
+**Prerequisites**:
+- Node.js >= 18
+- Python >= 3.11
+- pnpm >= 8
+- Docker Desktop
+
+**Quick Setup**:
+
 ```bash
-# Clonar el repositorio
-git clone https://github.com/user/trii-platform.git
-cd trii-platform
+# Clone repository
+git clone https://github.com/your-org/investment-app.git
+cd investment-app
 
-# Desplegar el entorno local
-./scripts/setup-local-env.sh
+# Install dependencies
+pnpm install
 
-# Acceder a la plataforma
-./scripts/open-trii.sh
+# Start backend services
+docker-compose up -d
+
+# Start desktop client
+pnpm dev
 ```
 
-## 🏗️ Arquitectura de la Plataforma
+## 🏗️ System Architecture
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        FE[React Frontend]
-        MOBILE[Mobile App]
+    subgraph "Desktop Client"
+        DC[Electron App]
+        UI[React UI]
+        STORE[Zustand Store]
     end
-    
-    subgraph "API Gateway"
-        GW[Kong Gateway]
+
+    subgraph "Backend Services"
+        MD[Market Data<br/>FastAPI/Python]
+        AE[Analysis Engine<br/>FastAPI/Python]
+        PM[Portfolio Manager<br/>NestJS/TypeScript]
+        MLP[ML Prediction<br/>FastAPI/Python]
     end
-    
-    subgraph "Microservicios"
-        AUTH[Auth Service]
-        MARKET[Market Data]
-        ANALYSIS[Analysis Engine]
-        ML[ML Prediction]
-        PORTFOLIO[Portfolio Manager]
-    end
-    
-    subgraph "Datos"
-        PG[(PostgreSQL)]
+
+    subgraph "Infrastructure"
+        PG[(PostgreSQL<br/>+ TimescaleDB)]
         REDIS[(Redis)]
-        RABBIT[RabbitMQ]
+        RMQ[(RabbitMQ)]
     end
-    
-    subgraph "Monitoreo"
+
+    subgraph "Monitoring"
         PROM[Prometheus]
         GRAF[Grafana]
-        LOGS[Logs]
+        LOKI[Loki]
     end
-    
-    FE --> GW
-    MOBILE --> GW
-    GW --> AUTH
-    GW --> MARKET
-    GW --> ANALYSIS
-    GW --> ML
-    GW --> PORTFOLIO
-    
-    MARKET --> PG
-    ANALYSIS --> REDIS
-    ML --> PG
-    PORTFOLIO --> RABBIT
-    
+
+    DC --> MD
+    DC --> AE
+    DC --> PM
+    DC --> MLP
+
+    MD --> PG
+    AE --> PG
+    PM --> PG
+    MLP --> PG
+
+    MD --> REDIS
+    AE --> REDIS
+
+    PM --> RMQ
+
     PROM --> GRAF
-    PROM --> LOGS
+    PROM --> LOKI
 ```
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Technology Stack
 
-### Frontend & UX
-- **React 18** con TypeScript para interfaces modernas
-- **TailwindCSS** para diseño responsivo
-- **Framer Motion** para animaciones fluidas
-- **React Query** para gestión de estado del servidor
+### Desktop Application
+- **Electron 28**: Cross-platform desktop framework
+- **React 18 + TypeScript**: Modern UI development
+- **Zustand**: Lightweight state management
+- **TailwindCSS**: Utility-first styling
+- **Recharts**: Data visualization
 
-### Backend & APIs
-- **FastAPI** (Python) para servicios de IA/ML
-- **Node.js/Express** para APIs de alto rendimiento  
-- **Kong** como API Gateway
-- **WebSockets** para datos en tiempo real
+### Backend Microservices
+- **Market Data Service**: FastAPI/Python - Real-time market data
+- **Analysis Engine**: FastAPI/Python - Technical analysis & indicators
+- **Portfolio Manager**: NestJS/TypeScript - Portfolio tracking
+- **ML Prediction Service**: FastAPI/Python - AI/ML predictions
 
-### Base de Datos & Cache
-- **PostgreSQL 15** con TimescaleDB para series temporales
-- **Redis** para cache y sesiones
-- **RabbitMQ** para colas de mensajes
-- **ClickHouse** para analytics
+### Data & Infrastructure
+- **PostgreSQL + TimescaleDB**: Time-series database
+- **Redis**: Caching and session storage
+- **RabbitMQ**: Message queuing
+- **Docker Compose**: Local development
+- **Kubernetes + ArgoCD**: Production deployment
 
-### IA & Machine Learning
-- **PyTorch** para modelos de deep learning
-- **Scikit-learn** para ML clásico
-- **TensorFlow** para predicciones en producción
-- **Transformers** para procesamiento de lenguaje natural
+### DevOps & Monitoring
+- **GitHub Actions**: CI/CD automation
+- **Prometheus + Grafana**: Monitoring and alerting
+- **Loki**: Log aggregation
+- **Helm Charts**: Kubernetes packaging
 
-### DevOps & Infraestructura
-- **Kubernetes** con ArgoCD para GitOps
-- **Docker** para containerización
-- **Prometheus + Grafana** para monitoreo
-- **GitHub Actions** para CI/CD
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 investment-app/
-├── apps/              # Frontend applications
-├── services/          # Backend microservices
-├── libs/              # Shared libraries
-├── infrastructure/    # Docker, IaC, monitoring
-├── scripts/           # Automation scripts
-├── docs/                        # Documentación técnica
-└── tests/                       # Integration & E2E tests
+├── apps/
+│   ├── desktop-client/          # Electron + React application
+│   │   ├── src/
+│   │   │   ├── main/            # Electron main process
+│   │   │   │   └── managers/    # Backend & Update managers
+│   │   │   └── renderer/        # React UI
+│   │   │       ├── components/
+│   │   │       │   └── common/  # Shared UI components
+│   │   │       └── store/       # Zustand state management
+│   │   └── resources/           # Icons, build assets
+│   └── next-frontend/           # Next.js web application
+├── services/                    # Backend microservices
+│   ├── market-data/            # FastAPI - Real-time quotes
+│   ├── analysis-engine/        # FastAPI - Technical analysis
+│   ├── portfolio-manager/      # NestJS - Portfolio tracking
+│   └── ml-prediction/          # FastAPI - ML predictions
+├── infrastructure/
+│   ├── docker/                 # Docker Compose configs
+│   ├── kubernetes/             # K8s manifests + ArgoCD
+│   │   ├── base/               # Base configurations
+│   │   ├── overlays/           # Environment overlays
+│   │   └── argocd/             # GitOps applications
+│   └── monitoring/             # Prometheus, Grafana, Loki
+├── database/                   # Database schemas & migrations
+├── scripts/                    # Automation scripts
+├── docs/                       # Documentation
+└── .github/workflows/          # CI/CD pipelines
 ```
 
-## 📈 Accesos de la Plataforma
+## 📊 Platform Access (Development)
 
-Una vez desplegada la plataforma, tendrás acceso a:
+When running locally, access these services:
 
-| Servicio | URL | Credenciales | Descripción |
-|----------|-----|--------------|-------------|
-| **🎯 TRII Frontend** | http://trii-frontend.local | - | Interfaz principal de usuario |
-| **🔧 ArgoCD** | https://argocd.local | admin/aPfgxZ6TucIImLwq | GitOps y despliegues |
-| **📊 Grafana** | http://trii-grafana.local | admin/trii-admin-2026 | Dashboards y métricas |
-| **📈 Prometheus** | http://trii-prometheus.local | - | Métricas del sistema |
+| Service | URL | Credentials | Description |
+|---------|-----|-------------|-------------|
+| **🖥️ TRII Desktop** | Local App | - | Main desktop application |
+| **🔧 ArgoCD** | https://argocd.local | admin/admin123 | GitOps dashboard |
+| **📊 Grafana** | http://localhost:3000 | admin/admin | Monitoring dashboards |
+| **📈 Prometheus** | http://localhost:9090 | - | Metrics collection |
+| **🐰 RabbitMQ** | http://localhost:15672 | guest/guest | Message queue |
 
-## 🚀 Despliegue Rápido
+## 🚀 Deployment Options
 
+### Local Development
 ```bash
-# Setup completo en un comando
-curl -sSL https://raw.githubusercontent.com/user/trii-platform/main/scripts/quick-setup.sh | bash
-
-# O manual paso a paso:
-git clone https://github.com/user/trii-platform.git
-cd trii-platform
-./scripts/setup-local-env.sh
-./scripts/open-trii.sh
-```
-
-## 📊 Monitoreo y Observabilidad
-
-### Dashboards Disponibles
-- **📈 TRII Platform Overview**: Estado general de todos los servicios
-- **🏢 Business Intelligence**: Métricas de negocio y usuarios  
-- **🤖 ML & AI Performance**: Rendimiento de modelos de IA
-- **🛡️ Security & Compliance**: Seguridad y cumplimiento normativo
-- **⚡ Infrastructure Metrics**: Recursos de Kubernetes
-
-### Métricas Clave
-- ✅ **Uptime**: 99.9% SLA objetivo
-- ⚡ **Latencia**: <100ms p95 para APIs
-- 🚀 **Throughput**: 10K req/s sostenidas
-- 🎯 **Precisión ML**: >85% en predicciones
-
-## 🔧 Desarrollo Local
-
-```bash
-# Instalar dependencias
-pnpm install
-
-# Levantar servicios de infraestructura
+# Start all services
 docker-compose up -d
 
-# Ejecutar migraciones
-pnpm db:migrate
-
-# Iniciar desarrollo
+# Start desktop client
 pnpm dev
-
-# Ejecutar tests
-pnpm test
-pnpm test:e2e
 ```
 
-## 📚 Documentación Técnica
+### Production Deployment
+```bash
+# Deploy to Kubernetes with ArgoCD
+kubectl apply -f infrastructure/kubernetes/
+```
 
-- [🏗️ Arquitectura del Sistema](docs/architecture/README.md)
-- [🗄️ Esquema de Base de Datos](docs/database/schema.md)
-- [🔌 Documentación de APIs](docs/api/README.md)
-- [📊 Guía de Monitoreo](docs/operations/monitoring.md)
-- [🛡️ Seguridad y Compliance](docs/security/README.md)
-- [🚀 Guía de Despliegue](docs/deployment/README.md)
-- [🧪 Estrategia de Testing](docs/testing/README.md)
+### Binary Distribution (Planned)
+- **Windows**: `.exe` installer with auto-updates
+- **macOS**: `.dmg` with code signing
+- **Linux**: `.AppImage` with desktop integration
 
-## 🤝 Contribuir al Proyecto
+## 📊 Monitoring & Observability
 
-1. **Fork** el repositorio
-2. **Crear** rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. **Commit** cambios (`git commit -am 'feat: añadir nueva funcionalidad'`)
-4. **Push** a la rama (`git push origin feature/nueva-funcionalidad`)
-5. **Crear** Pull Request siguiendo el [template](.github/pull_request_template.md)
+### Available Dashboards
+- **Platform Overview**: System health and performance
+- **Business Intelligence**: User metrics and engagement
+- **ML Performance**: AI model accuracy and predictions
+- **Infrastructure**: Kubernetes resource utilization
 
-### Convenciones de Código
-- **Commits**: Seguir [Conventional Commits](https://www.conventionalcommits.org/)
-- **TypeScript**: Strict mode habilitado
+### Key Metrics
+- **Uptime**: 99.9% target SLA
+- **Response Time**: <100ms p95 for API calls
+- **Data Freshness**: <5s market data latency
+- **ML Accuracy**: >85% prediction accuracy
+
+## 🔧 Development
+
+### Local Setup
+```bash
+# Install dependencies
+pnpm install
+
+# Start infrastructure
+docker-compose up -d
+
+# Run database migrations
+docker exec trii-postgres psql -U postgres -d trii -f /docker-entrypoint-initdb.d/init_db.sql
+
+# Start development
+pnpm dev
+
+# Run tests
+pnpm test
+```
+
+### Code Quality
+- **TypeScript**: Strict mode enabled
+- **ESLint + Prettier**: Code formatting and linting
 - **Python**: Black + isort + mypy
-- **Testing**: Mínimo 80% coverage
+- **Testing**: Jest for frontend, pytest for backend
 
-## 📄 Licencia
+## 📚 Documentation
 
-Este proyecto es propiedad de **TRII Financial Technologies SAS**.  
-Todos los derechos reservados. Ver [LICENSE](LICENSE) para detalles.
+- [🏗️ System Architecture](docs/architecture/README.md)
+- [🗄️ Database Schema](docs/database/schema.md)
+- [🔌 API Documentation](docs/api/README.md)
+- [📊 Monitoring Guide](docs/operations/monitoring.md)
+- [🛡️ Security & Compliance](docs/security/README.md)
+- [🚀 Deployment Guide](docs/deployment/README.md)
+- [🧪 Testing Strategy](docs/testing/README.md)
 
-## 📞 Soporte y Comunidad
+## 🤝 Contributing
 
-- 📧 **Email**: support@trii.co
-- 💬 **Discord**: [TRII Community](https://discord.gg/trii)
-- 📖 **Documentación**: [docs.trii.co](https://docs.trii.co)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/user/trii-platform/issues)
-- 📱 **Telegram**: [@trii_soporte](https://t.me/trii_soporte)
+1. **Fork** the repository
+2. **Create** feature branch (`git checkout -b feature/amazing-feature`)
+3. **Develop** with tests and documentation
+4. **Commit** using conventional commits
+5. **Push** and create pull request
 
-## 🏆 Reconocimientos
+### Development Standards
+- **Conventional Commits**: `feat:`, `fix:`, `docs:`, etc.
+- **Testing**: Minimum 80% code coverage
+- **Documentation**: Update docs for API changes
+- **Security**: Follow security best practices
 
-- **🥇 Fintech del Año 2025** - Colombia Fintech
-- **🌟 Mejor Innovación en IA** - TechCrunch Disrupt
-- **🛡️ Certificación ISO 27001** - Seguridad de la Información
-- **📜 Autorización SFC** - Superintendencia Financiera
+## 📄 License
+
+**Private/Commercial License** - All rights reserved.
+
+## 📞 Support & Community
+
+- **Issues**: [GitHub Issues](https://github.com/your-org/investment-app/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/investment-app/discussions)
+- **Email**: support@trii-platform.com
+
+## 🏆 Project Status
+
+**Current Status**: Beta Release Ready
+**Target Release**: Q1 2025
+**Health Score**: 8/10 ✅
 
 ---
 
-**Versión**: 2.1.0 | **Última Actualización**: Enero 2026
+**Version**: 1.0.0-beta | **Last Updated**: January 2025
 
-**¡Hecho con ❤️ en Colombia para democratizar las inversiones inteligentes!** 🇨🇴
+**Built with ❤️ for intelligent investment decisions**

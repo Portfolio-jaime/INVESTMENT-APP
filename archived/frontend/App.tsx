@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle, Home, Activity } from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, Menu, X, RefreshCw, AlertCircle, Home, Activity, Lightbulb } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import InvestmentDashboard from './components/InvestmentDashboard';
 import LoveableDashboard from './components/LoveableDashboard';
@@ -8,6 +8,7 @@ import ModernDashboard from './components/ModernDashboard';
 import Watchlist from './components/Watchlist';
 import PortfolioView from './components/PortfolioView';
 import EnhancedPortfolioView from './components/EnhancedPortfolioView';
+import RecommendationsView from './components/RecommendationsView';
 import SetupWizard from './components/SetupWizard/SetupWizard';
 import LandingPage from './components/LandingPage';
 import ModernLandingPage from './components/ModernLandingPage';
@@ -23,6 +24,10 @@ interface Notification {
   message: string;
   timestamp: Date;
 }
+
+// Feature flags from environment variables
+const enableRecommendations = import.meta.env.VITE_ENABLE_RECOMMENDATIONS === 'true';
+const enableAdvancedCharts = import.meta.env.VITE_ENABLE_ADVANCED_CHARTS === 'true';
 
 const App: React.FC = () => {
   const [setupCompleted, setSetupCompleted] = useState(true); // Force setup completion for testing
@@ -87,7 +92,8 @@ const App: React.FC = () => {
     { id: 'dashboard', label: 'Analytics', icon: Activity, color: 'blue' },
     { id: 'watchlist', label: 'Watchlist', icon: TrendingUp, color: 'green' },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart, color: 'purple' },
-    { id: 'charts', label: 'Charts', icon: BarChart3, color: 'orange' }
+    ...(enableAdvancedCharts ? [{ id: 'charts', label: 'Charts', icon: BarChart3, color: 'orange' }] : []),
+    ...(enableRecommendations ? [{ id: 'recommendations', label: 'Recommendations', icon: Lightbulb, color: 'yellow' }] : [])
   ];
 
   const getTabColor = (tabId: string) => {
@@ -206,6 +212,7 @@ const App: React.FC = () => {
                 {activeTab === 'charts' && 'Interactive charts and investment analytics'}
                 {activeTab === 'watchlist' && 'Track your favorite stocks with real-time data'}
                 {activeTab === 'portfolio' && 'Manage your investment portfolio and performance'}
+                {activeTab === 'recommendations' && 'AI-powered investment recommendations and insights'}
               </p>
             </div>
 
@@ -213,9 +220,10 @@ const App: React.FC = () => {
             <div className="space-y-6">
               {activeTab === 'landing' && <ModernLandingPage />}
               {activeTab === 'dashboard' && <SimpleDashboard addNotification={addNotification} />}
-              {activeTab === 'charts' && <InvestmentDashboard />}
+              {activeTab === 'charts' && enableAdvancedCharts && <InvestmentDashboard />}
               {activeTab === 'watchlist' && <Watchlist addNotification={addNotification} />}
               {activeTab === 'portfolio' && <EnhancedPortfolioView addNotification={addNotification} />}
+              {activeTab === 'recommendations' && enableRecommendations && <RecommendationsView addNotification={addNotification} />}
             </div>
           </div>
         </main>

@@ -19,6 +19,8 @@ on:
     branches:
       - main
       - develop
+  release:
+    types: [published]
 
 env:
   REGISTRY: docker.io
@@ -221,51 +223,60 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
 
+      - name: Set image tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         uses: docker/build-push-action@v5
         with:
           context: ./backend/market-data
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:${{ steps.vars.outputs.SHORT_SHA }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:${{ steps.tag.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:latest
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-market-data:buildcache,mode=max
 
       - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         run: |
-          SHORT_SHA=${GITHUB_SHA:0:8}
-          echo "🏷️ Updating Helm values with tag: $SHORT_SHA"
-          
+          TAG=${{ steps.tag.outputs.tag }}
+          echo "🏷️ Updating Helm values with tag: $TAG"
+
           # Verify file exists
           if [ ! -f "infrastructure/helm/market-data/values.yaml" ]; then
             echo "❌ values.yaml not found!"
             exit 1
           fi
-          
+
           # Show current tag
           echo "Current tag:"
           grep 'tag:' infrastructure/helm/market-data/values.yaml
-          
+
           # Update tag
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" infrastructure/helm/market-data/values.yaml
-          
+          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/market-data/values.yaml
+
           # Show updated tag
           echo "Updated tag:"
           grep 'tag:' infrastructure/helm/market-data/values.yaml
-          
+
           # Git operations
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/market-data/values.yaml
-          
+
           if git diff --staged --quiet; then
             echo "No changes detected in values.yaml"
           else
-            git commit -m "Update market-data image tag to $SHORT_SHA [skip ci]"
+            git commit -m "Update market-data image tag to $TAG [skip ci]"
             git pull --rebase origin ${{ github.ref_name }}
             git push
             echo "✅ Helm values updated successfully"
@@ -318,28 +329,37 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
 
+      - name: Set image tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         uses: docker/build-push-action@v5
         with:
           context: ./backend/analysis-engine
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:${{ steps.vars.outputs.SHORT_SHA }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:${{ steps.tag.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:latest
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-analysis-engine:buildcache,mode=max
 
       - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         run: |
-          SHORT_SHA=${GITHUB_SHA:0:8}
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" infrastructure/helm/analysis-engine/values.yaml
+          TAG=${{ steps.tag.outputs.tag }}
+          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/analysis-engine/values.yaml
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/analysis-engine/values.yaml
-          git commit -m "Update analysis-engine image tag to $SHORT_SHA [skip ci]" || echo "No changes to commit"
+          git commit -m "Update analysis-engine image tag to $TAG [skip ci]" || echo "No changes to commit"
           git pull --rebase origin ${{ github.ref_name }}
           git push
 
@@ -391,28 +411,37 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
 
+      - name: Set image tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         uses: docker/build-push-action@v5
         with:
           context: ./backend/portfolio-manager
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:${{ steps.vars.outputs.SHORT_SHA }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:${{ steps.tag.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:latest
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-portfolio-manager:buildcache,mode=max
 
       - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         run: |
-          SHORT_SHA=${GITHUB_SHA:0:8}
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" infrastructure/helm/portfolio-manager/values.yaml
+          TAG=${{ steps.tag.outputs.tag }}
+          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/portfolio-manager/values.yaml
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/portfolio-manager/values.yaml
-          git commit -m "Update portfolio-manager image tag to $SHORT_SHA [skip ci]" || echo "No changes to commit"
+          git commit -m "Update portfolio-manager image tag to $TAG [skip ci]" || echo "No changes to commit"
           git pull --rebase origin ${{ github.ref_name }}
           git push
 
@@ -463,28 +492,37 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
 
+      - name: Set image tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         uses: docker/build-push-action@v5
         with:
           context: ./backend/ml-prediction
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:${{ steps.vars.outputs.SHORT_SHA }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:${{ steps.tag.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:latest
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-ml-prediction:buildcache,mode=max
 
       - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
         run: |
-          SHORT_SHA=${GITHUB_SHA:0:8}
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" infrastructure/helm/ml-prediction/values.yaml
+          TAG=${{ steps.tag.outputs.tag }}
+          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/ml-prediction/values.yaml
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add infrastructure/helm/ml-prediction/values.yaml
-          git commit -m "Update ml-prediction image tag to $SHORT_SHA [skip ci]" || echo "No changes to commit"
+          git commit -m "Update ml-prediction image tag to $TAG [skip ci]" || echo "No changes to commit"
           git pull --rebase origin ${{ github.ref_name }}
           git push
 
@@ -691,6 +729,15 @@ jobs:
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "🏷️ Using SHA tag: $SHORT_SHA"
 
+      - name: Set image tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Check Docker credentials
         id: docker-check
         run: |
@@ -718,7 +765,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            jaimehenao8126/trii-frontend-app:${{ steps.vars.outputs.SHORT_SHA }}
+            jaimehenao8126/trii-frontend-app:${{ steps.tag.outputs.tag }}
             jaimehenao8126/trii-frontend-app:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -731,57 +778,57 @@ jobs:
           echo "✅ Docker image built successfully (local only)"
 
       - name: Update Helm values
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && steps.docker-check.outputs.has-credentials == 'true'
+        if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release') && steps.docker-check.outputs.has-credentials == 'true'
         run: |
           echo "🚀 Updating Helm values for deployment..."
           set -e  # Exit on error
-          
-          SHORT_SHA=${GITHUB_SHA:0:8}
+
+          TAG=${{ steps.tag.outputs.tag }}
           HELM_VALUES_FILE="infrastructure/helm/frontend-app/values.yaml"
-          
+
           # Verify Helm values file exists
           if [ ! -f "$HELM_VALUES_FILE" ]; then
             echo "❌ Helm values file not found: $HELM_VALUES_FILE"
             exit 1
           fi
-          
+
           echo "✅ Found Helm values file"
-          echo "🏷️ Updating image tag to: $SHORT_SHA"
-          
+          echo "🏷️ Updating image tag to: $TAG"
+
           # Show current tag
           echo "📋 Current image configuration:"
           grep -A 2 -B 2 'tag:' "$HELM_VALUES_FILE" || echo "No tag found in values.yaml"
-          
+
           # Update tag with better regex
-          if sed -i.bak "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" "$HELM_VALUES_FILE"; then
+          if sed -i.bak "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" "$HELM_VALUES_FILE"; then
             echo "✅ Successfully updated tag in values.yaml"
           else
             echo "❌ Failed to update tag in values.yaml"
             exit 1
           fi
-          
+
           # Verify the change
           echo "📋 Updated image configuration:"
           grep -A 2 -B 2 'tag:' "$HELM_VALUES_FILE"
-          
+
           # Git configuration
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
+
           # Add and commit changes
           git add "$HELM_VALUES_FILE"
-          
+
           if git diff --staged --quiet; then
             echo "ℹ️ No changes detected in Helm values"
           else
             # Try to commit and push with error handling
-            if git commit -m "Update frontend-app image tag to $SHORT_SHA [skip ci]"; then
+            if git commit -m "Update frontend-app image tag to $TAG [skip ci]"; then
               echo "✅ Changes committed successfully"
-              
+
               # Pull latest changes and push
               if git pull --rebase origin "${{ github.ref_name }}"; then
                 echo "✅ Successfully pulled latest changes"
-                
+
                 if git push; then
                   echo "✅ Changes pushed successfully"
                   echo "🚀 Helm values updated and pushed!"
@@ -817,6 +864,71 @@ jobs:
           echo "Push to registry: ${{ steps.docker-check.outputs.has-credentials == 'true' && 'YES' || 'NO' }}"
           echo "Helm update: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && steps.docker-check.outputs.has-credentials == 'true' && 'YES' || 'NO' }}"
           echo "=================="
+
+  # Build and test Desktop Client
+  build-desktop-client:
+    name: Build Desktop Client
+    needs: detect-changes
+    if: needs.detect-changes.outputs.desktop-client == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set short SHA
+        id: vars
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
+
+      - name: Set image tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ steps.vars.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/desktop-client
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:${{ steps.tag.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/trii-desktop-client:buildcache,mode=max
+
+      - name: Update Helm values
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'release'
+        run: |
+          TAG=${{ steps.tag.outputs.tag }}
+          sed -i "s/tag: \"[^\"]*\"/tag: \"$TAG\"/" infrastructure/helm/desktop-client/values.yaml
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add infrastructure/helm/desktop-client/values.yaml
+          git commit -m "Update desktop-client image tag to $TAG [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed, keeping previous image tag"
+          git checkout HEAD -- infrastructure/helm/desktop-client/values.yaml
 
   # Update ArgoCD configurations
   update-argocd:
@@ -923,13 +1035,14 @@ jobs:
   # Update Image Tags in ArgoCD Applications
   update-image-tags:
     name: Update ArgoCD Image Tags
-    needs: 
+    needs:
       - detect-changes
       - build-market-data
       - build-analysis-engine
       - build-portfolio-manager
       - build-ml-prediction
       - build-frontend-app
+      - build-desktop-client
     if: always() && (needs.build-market-data.result == 'success' || needs.build-analysis-engine.result == 'success' || needs.build-portfolio-manager.result == 'success' || needs.build-ml-prediction.result == 'success' || needs.build-frontend-app.result == 'success')
     runs-on: ubuntu-latest
     steps:
@@ -947,6 +1060,13 @@ jobs:
             echo "📱 Updating frontend-app image tag..."
             sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/frontend-app.yaml
             echo "✅ Frontend app updated to ${{ github.sha }}"
+          fi
+
+          # Update Desktop Client
+          if [[ "${{ needs.build-desktop-client.result }}" == "success" ]]; then
+            echo "💻 Updating desktop-client image tag..."
+            sed -i 's/tag: "replace-me-with-commit-hash"/tag: "${{ github.sha }}"/g' infrastructure/argocd/desktop-client-app.yaml
+            echo "✅ Desktop client updated to ${{ github.sha }}"
           fi
           
           # Update Market Data Service
@@ -990,6 +1110,7 @@ jobs:
             
             Auto-updated by CI/CD pipeline:
             - Frontend App: ${{ needs.build-frontend-app.result }}
+            - Desktop Client: ${{ needs.build-desktop-client.result }}
             - Market Data: ${{ needs.build-market-data.result }}
             - Analysis Engine: ${{ needs.build-analysis-engine.result }}
             - Portfolio Manager: ${{ needs.build-portfolio-manager.result }}
@@ -1004,13 +1125,14 @@ jobs:
     name: CI Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: 
+    needs:
       - detect-changes
       - build-market-data
       - build-analysis-engine
       - build-portfolio-manager
       - build-ml-prediction
       - build-frontend-app
+      - build-desktop-client
       - update-argocd
       - test-infrastructure
     steps:
@@ -1039,6 +1161,7 @@ jobs:
           echo "  - Portfolio Manager: ${{ needs.build-portfolio-manager.result }}"
           echo "  - ML Prediction: ${{ needs.build-ml-prediction.result }}"
           echo "  - Frontend App: ${{ needs.build-frontend-app.result }}"
+          echo "  - Desktop Client: ${{ needs.build-desktop-client.result }}"
           echo "  - ArgoCD Update: ${{ needs.update-argocd.result }}"
           echo "  - Infrastructure: ${{ needs.test-infrastructure.result }}"
           echo ""
@@ -1051,12 +1174,13 @@ jobs:
           echo "🔒 Security: SSL/TLS, RBAC, service mesh ready"
           echo "📈 All services: Frontend, Analysis Engine, Market Data, ML, Portfolio Manager"
           
-          if [[ "${{ needs.build-market-data.result }}" == "failure" || 
-                "${{ needs.build-analysis-engine.result }}" == "failure" || 
-                "${{ needs.build-portfolio-manager.result }}" == "failure" || 
-                "${{ needs.build-ml-prediction.result }}" == "failure" || 
-                "${{ needs.build-frontend-app.result }}" == "failure" || 
-                "${{ needs.update-argocd.result }}" == "failure" || 
+          if [[ "${{ needs.build-market-data.result }}" == "failure" ||
+                "${{ needs.build-analysis-engine.result }}" == "failure" ||
+                "${{ needs.build-portfolio-manager.result }}" == "failure" ||
+                "${{ needs.build-ml-prediction.result }}" == "failure" ||
+                "${{ needs.build-frontend-app.result }}" == "failure" ||
+                "${{ needs.build-desktop-client.result }}" == "failure" ||
+                "${{ needs.update-argocd.result }}" == "failure" ||
                 "${{ needs.test-infrastructure.result }}" == "failure" ]]; then
             echo "❌ Some builds failed, review logs for details"
             exit 1

@@ -38,6 +38,16 @@ const InvestmentDashboard: React.FC = () => {
   const { preferences } = useAppStore();
   const theme = preferences.theme;
 
+  // Feature flag for advanced charts
+  const enableAdvancedCharts = import.meta.env.VITE_ENABLE_ADVANCED_CHARTS === 'true';
+
+  // If advanced charts not enabled, force line chart
+  useEffect(() => {
+    if (!enableAdvancedCharts) {
+      setChartType('line');
+    }
+  }, [enableAdvancedCharts]);
+
   // Popular symbols for quick selection
   const popularSymbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX'];
   
@@ -296,26 +306,28 @@ const InvestmentDashboard: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Chart Type Buttons */}
-                <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                  {[
-                    { type: 'line', icon: Activity },
-                    { type: 'area', icon: BarChart3 },
-                    { type: 'bar', icon: BarChart3 }
-                  ].map(({ type, icon: Icon }) => (
-                    <button
-                      key={type}
-                      onClick={() => setChartType(type)}
-                      className={`p-2 rounded-md transition-colors ${
-                        chartType === type 
-                          ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </button>
-                  ))}
-                </div>
+                {/* Chart Type Buttons - only show if advanced charts enabled */}
+                {enableAdvancedCharts && (
+                  <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                    {[
+                      { type: 'line', icon: Activity },
+                      { type: 'area', icon: BarChart3 },
+                      { type: 'bar', icon: BarChart3 }
+                    ].map(({ type, icon: Icon }) => (
+                      <button
+                        key={type}
+                        onClick={() => setChartType(type)}
+                        className={`p-2 rounded-md transition-colors ${
+                          chartType === type
+                            ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
