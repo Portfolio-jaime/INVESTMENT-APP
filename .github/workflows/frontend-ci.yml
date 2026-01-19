@@ -33,6 +33,11 @@ jobs:
         with:
           fetch-depth: 0  # Necesario para git operations
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
       - name: Debug environment
         run: |
           echo "🔍 Environment Debug Information"
@@ -42,61 +47,51 @@ jobs:
           echo "Frontend path exists: $(test -d apps/next-frontend && echo 'YES' || echo 'NO')"
           echo "Package.json exists: $(test -f apps/next-frontend/package.json && echo 'YES' || echo 'NO')"
           echo "Dockerhub secrets configured: $([ -n '${{ secrets.DOCKERHUB_USERNAME }}' ] && [ -n '${{ secrets.DOCKERHUB_TOKEN }}' ] && echo 'YES' || echo 'NO')"
+          echo "pnpm available: $(which pnpm && echo 'YES' || echo 'NO')"
+          echo "pnpm-lock.yaml exists: $(test -f pnpm-lock.yaml && echo 'YES' || echo 'NO')"
+          echo "Root package.json scripts: $(jq -r '.scripts | keys[]' package.json 2>/dev/null | tr '\n' ', ' || echo 'N/A')"
+          echo "Frontend package.json scripts: $(jq -r '.scripts | keys[]' apps/next-frontend/package.json 2>/dev/null | tr '\n' ', ' || echo 'N/A')"
 
-      - name: Check package.json and create lock file if needed
+      - name: Check package.json
         working-directory: ./apps/next-frontend
         run: |
-          echo "📋 Checking package.json and lock file..."
+          echo "📋 Checking package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ package.json not found in apps/next-frontend"
             exit 1
           fi
-
           echo "✅ package.json found"
-
-          if [ ! -f "package-lock.json" ]; then
-            echo "⚠️ package-lock.json not found, generating it..."
-            npm install --package-lock-only
-            echo "✅ package-lock.json generated"
-          else
-            echo "✅ package-lock.json exists"
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'apps/next-frontend/package-lock.json'
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        working-directory: ./apps/next-frontend
         run: |
           echo "📦 Installing frontend dependencies..."
           set -e  # Exit on error
 
-          # First try npm ci for reliable installs
-          if npm ci --prefer-offline --no-audit; then
-            echo "✅ npm ci completed successfully"
+          # Use pnpm install with frozen lockfile for reliable installs
+          if pnpm install --frozen-lockfile; then
+            echo "✅ pnpm install completed successfully"
           else
-            echo "⚠️ npm ci failed, trying npm install as fallback"
-            npm install --no-audit
-            echo "✅ npm install completed"
+            echo "❌ pnpm install failed"
+            exit 1
           fi
 
       - name: Verify installation
-        working-directory: ./apps/next-frontend
         run: |
           echo "🔍 Verifying installation..."
-          echo "Node modules exists: $(test -d node_modules && echo 'YES' || echo 'NO')"
-          echo "Package-lock exists: $(test -f package-lock.json && echo 'YES' || echo 'NO')"
-          npm list --depth=0 || echo "Package listing completed"
+          echo "Node modules exists: $(test -d apps/next-frontend/node_modules && echo 'YES' || echo 'NO')"
+          echo "pnpm-lock.yaml exists: $(test -f pnpm-lock.yaml && echo 'YES' || echo 'NO')"
+          pnpm list --depth=0 || echo "Package listing completed"
 
       - name: Type check
-        working-directory: ./apps/next-frontend
         run: |
           echo "🔧 Running TypeScript type check..."
-          if npm run type-check; then
+          if pnpm --filter next-frontend run type-check; then
             echo "✅ Type check passed"
           else
             echo "⚠️ Type check failed - continuing build"
@@ -104,10 +99,9 @@ jobs:
           fi
 
       - name: Lint code
-        working-directory: ./apps/next-frontend
         run: |
           echo "🔍 Running ESLint..."
-          if npm run lint; then
+          if pnpm --filter next-frontend run lint; then
             echo "✅ Lint check passed"
           else
             echo "⚠️ Lint check failed - continuing build"
@@ -115,10 +109,9 @@ jobs:
           fi
 
       - name: Run tests
-        working-directory: ./apps/next-frontend
         run: |
           echo "🧪 Running tests..."
-          if npm test; then
+          if pnpm --filter next-frontend run test; then
             echo "✅ Tests passed"
           else
             echo "⚠️ Tests failed - continuing build"
@@ -126,15 +119,14 @@ jobs:
           fi
 
       - name: Build application
-        working-directory: ./apps/next-frontend
         run: |
           echo "🏗️ Building frontend application..."
           set -e  # Exit on error
 
-          if npm run build; then
+          if pnpm --filter next-frontend run build; then
             echo "✅ Build completed successfully"
             echo "📊 Build output:"
-            ls -la .next/ || echo "No .next directory found"
+            ls -la apps/next-frontend/.next/ || echo "No .next directory found"
           else
             echo "❌ Build failed"
             exit 1
@@ -161,8 +153,8 @@ jobs:
           done
           
           echo "📊 Landing Page summary:"
-          echo "  - Components found: $(find apps/next-frontend/components -name "LandingPage*" | wc -l)"
-          echo "  - Build output size: $(du -sh apps/next-frontend/dist 2>/dev/null || echo 'N/A')"
+          echo "  - Components found: $(find apps/next-frontend/src/components -name "LandingPage*" | wc -l)"
+          echo "  - Build output size: $(du -sh apps/next-frontend/.next 2>/dev/null || echo 'N/A')"
 
       # Docker build and push section
       - name: Set up Docker Buildx

@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "dev": "node src/server.js",
+    "test": "echo 'No tests specified'",
+    "build": "echo 'No build step required'"
   },
   "dependencies": {
     "fastify": "^4.24.3",
