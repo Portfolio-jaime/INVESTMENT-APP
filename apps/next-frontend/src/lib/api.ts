@@ -55,7 +55,7 @@ class ApiClient {
     if (result.data) {
       return { data: result.data.investments };
     }
-    return result as ApiResponse<Investment[]>;
+    return { error: result.error };
   }
 
   async getInvestment(id: number): Promise<ApiResponse<Investment>> {
@@ -63,7 +63,7 @@ class ApiClient {
     if (result.data) {
       return { data: result.data.investment };
     }
-    return result as ApiResponse<Investment>;
+    return { error: result.error };
   }
 
   async createInvestment(investment: Omit<Investment, 'id'>): Promise<ApiResponse<Investment>> {
@@ -74,7 +74,7 @@ class ApiClient {
     if (result.data) {
       return { data: result.data.investment };
     }
-    return result as ApiResponse<Investment>;
+    return { error: result.error };
   }
 
   // Recommendations API
@@ -83,7 +83,7 @@ class ApiClient {
     if (result.data) {
       return { data: result.data.recommendations };
     }
-    return result as ApiResponse<Recommendation[]>;
+    return { error: result.error };
   }
 
   async getRecommendation(id: number): Promise<ApiResponse<Recommendation>> {
@@ -91,7 +91,7 @@ class ApiClient {
     if (result.data) {
       return { data: result.data.recommendation };
     }
-    return result as ApiResponse<Recommendation>;
+    return { error: result.error };
   }
 
   async createRecommendation(recommendation: Omit<Recommendation, 'id'>): Promise<ApiResponse<Recommendation>> {
@@ -102,7 +102,7 @@ class ApiClient {
     if (result.data) {
       return { data: result.data.recommendation };
     }
-    return result as ApiResponse<Recommendation>;
+    return { error: result.error };
   }
 }
 

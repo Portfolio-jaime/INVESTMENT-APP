@@ -12,5 +12,5 @@ images:
     newName: jaimehenao8126/trii-backend
     newTag: latest
   - name: frontend
-    newName: jaimehenao8126/trii-frontend-app
+    newName: frontend
     newTag: latest
