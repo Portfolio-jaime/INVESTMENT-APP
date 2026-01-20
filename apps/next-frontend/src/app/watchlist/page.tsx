@@ -1,9 +1,27 @@
-export default function Watchlist() {
+import { Header } from '@/components/layout/Header';
+import { WatchlistTable } from '@/components/features/watchlist/WatchlistTable';
+import { AddStockForm } from '@/components/features/watchlist/AddStockForm';
+
+export default function WatchlistPage() {
   return (
-    <div className="min-h-screen bg-background p-8">
-      <h1 className="text-4xl font-bold text-foreground mb-8">Watchlist</h1>
-      <p className="text-foreground">Monitor your favorite stocks and get personalized recommendations.</p>
-      {/* Add watchlist components here */}
+    <div className="min-h-screen bg-background">
+      <Header
+        title="Watchlist"
+        description="Monitor stocks you're interested in and set price alerts"
+        breadcrumbs={[
+          { label: 'Watchlist' }
+        ]}
+      />
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Add Stock Form */}
+        <div className="mb-8">
+          <AddStockForm />
+        </div>
+
+        {/* Watchlist Table */}
+        <WatchlistTable />
+      </main>
     </div>
   );
 }

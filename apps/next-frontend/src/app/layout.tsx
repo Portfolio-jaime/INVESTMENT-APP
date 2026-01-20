@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navigation from "@/components/Navigation";
+import { Navigation } from "@/components/layout/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Investment App",
-  description: "Advanced investment analysis and portfolio management",
+  title: "TRII Investment Platform",
+  description: "Professional investment decision support platform",
 };
 
 export default function RootLayout({
@@ -29,7 +29,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navigation />
-        {children}
+        <main className="min-h-screen bg-background">
+          {children}
+        </main>
       </body>
     </html>
   );

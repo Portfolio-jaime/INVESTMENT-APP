@@ -5,19 +5,14 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
   rules:
-  - host: trii-platform.local
+  - host: frontend.local
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: frontend
+            name: frontend-service
             port:
               number: 80
-  tls:
-  - hosts:
-    - trii-platform.local
-    secretName: frontend-tls

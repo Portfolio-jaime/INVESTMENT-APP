@@ -1,16 +1,4 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-bases:
+resources:
   - ../../base
-
-patchesStrategicMerge:
-  - frontend-service-patch.yaml
-
-images:
-  - name: backend
-    newName: jaimehenao8126/trii-backend
-    newTag: latest
-  - name: frontend
-    newName: frontend
-    newTag: latest
