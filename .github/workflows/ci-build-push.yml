@@ -1,0 +1,101 @@
+name: CI - Build and Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'apps/**'
+      - '.github/workflows/ci-build-push.yml'
+
+env:
+  DOCKER_USERNAME: jaimehenao8126
+  REGISTRY: docker.io
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      market-data: ${{ steps.filter.outputs.market-data }}
+      analysis-engine: ${{ steps.filter.outputs.analysis-engine }}
+      portfolio-manager: ${{ steps.filter.outputs.portfolio-manager }}
+      ml-prediction: ${{ steps.filter.outputs.ml-prediction }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            market-data:
+              - 'services/market-data/**'
+            analysis-engine:
+              - 'services/analysis-engine/**'
+            portfolio-manager:
+              - 'services/portfolio-manager/**'
+            ml-prediction:
+              - 'services/ml-prediction/**'
+            frontend:
+              - 'apps/frontend/**'
+
+  build-push:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - { name: market-data, path: services/market-data, changed: ${{ needs.detect-changes.outputs.market-data }} }
+          - { name: analysis-engine, path: services/analysis-engine, changed: ${{ needs.detect-changes.outputs.analysis-engine }} }
+          - { name: portfolio-manager, path: services/portfolio-manager, changed: ${{ needs.detect-changes.outputs.portfolio-manager }} }
+          - { name: ml-prediction, path: services/ml-prediction, changed: ${{ needs.detect-changes.outputs.ml-prediction }} }
+          - { name: frontend, path: apps/frontend, changed: ${{ needs.detect-changes.outputs.frontend }} }
+    if: ${{ matrix.service.changed == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.service.name }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service.path }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  update-manifests:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+      - name: Update Helm values
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          for service in market-data analysis-engine portfolio-manager ml-prediction frontend; do
+            if [ -f "helm/values/dev.yaml" ]; then
+              yq eval ".${service}.image.tag = \"${IMAGE_TAG:0:7}\"" -i helm/values/dev.yaml
+            fi
+          done
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add helm/values/
+          git diff-index --quiet HEAD || git commit -m "chore: update image tags to ${GITHUB_SHA:0:7} [skip ci]"
+          git push

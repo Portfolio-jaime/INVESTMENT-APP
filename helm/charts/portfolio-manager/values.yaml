@@ -1,0 +1,16 @@
+replicaCount: 2
+image:
+  repository: jaimehenao8126/portfolio-manager
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8003
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+env: []

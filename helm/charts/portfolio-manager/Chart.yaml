@@ -1,0 +1,4 @@
+apiVersion: v2
+name: portfolio-manager
+version: 0.1.0
+description: Portfolio Manager Service Helm Chart
