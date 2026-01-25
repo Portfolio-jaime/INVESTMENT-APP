@@ -1,0 +1,16 @@
+spec:
+  template:
+    spec:
+      containers:
+      - name: dex
+        env:
+        - name: GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: argocd-dex-github
+              key: GITHUB_CLIENT_ID
+        - name: GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: argocd-dex-github
+              key: GITHUB_CLIENT_SECRET
