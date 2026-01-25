@@ -1,0 +1,4 @@
+apiVersion: v2
+name: market-data
+version: 0.1.0
+description: Market Data Service Helm Chart

@@ -1,0 +1,23 @@
+# Default values for MongoDB subchart
+# This will be passed to the Bitnami MongoDB Helm chart
+
+mongodb:
+  auth:
+    rootPassword: "your-root-password" # IMPORTANT: Change this in production!
+    username: "admin"
+    password: "your-password" # IMPORTANT: Change this in production!
+    database: "investment_app_db"
+
+  replicaSet:
+    enabled: false # Disable replica set for local development simplicity
+
+  # You can add more customizations here as needed
+  # For example, resource limits, persistent volume claims, etc.
+  # primary:
+  #   resources:
+  #     limits:
+  #       cpu: "300m"
+  #       memory: "512Mi"
+  #     requests:
+  #       cpu: "200m"
+  #       memory: "256Mi"

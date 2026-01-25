@@ -1,0 +1,44 @@
+# Default values for backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: jaimehenao8126/fastify-backend # Replace with your Docker Hub username
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest" # This will be updated by the CI/CD pipeline
+
+service:
+  type: ClusterIP
+  port: 3000 # Fastify default port
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    # kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: trii-api.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+env:
+  MONGODB_URI: "mongodb://mongodb.default.svc.cluster.local:27017/investment_app_db" # Example, adjust as needed
+  # Other environment variables like JWT_SECRET, etc.
+  # JWT_SECRET: "your-jwt-secret"

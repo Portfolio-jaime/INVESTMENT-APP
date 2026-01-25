@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  # map all authenticated users to admin role
+  policy.csv: |
+    g, github-users, role:admin
+  # github-users is a special group for all authenticated users via GitHub OIDC

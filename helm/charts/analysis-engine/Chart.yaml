@@ -1,0 +1,4 @@
+apiVersion: v2
+name: analysis-engine
+version: 0.1.0
+description: Analysis Engine Service Helm Chart

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  url: http://argocd.local # Your ArgoCD URL
+  oidc.config: |
+    name: GitHub
+    issuer: https://github.com
+    clientID: Ov23liLk7cJcNYInr2w5
+    clientSecret: bc16d5b4a20adfc4935b5adac5abe8e4e354f87e
+    requestedScopes: ["openid", "profile", "email"]

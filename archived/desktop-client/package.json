@@ -1,0 +1,163 @@
+{
+  "name": "trii-desktop-client",
+  "version": "1.0.0",
+  "description": "TRII Investment Platform Desktop Client",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "start": "concurrently \"npm run build:renderer:watch\" \"npm run build:main:watch\" \"npm run start:electron\"",
+    "start:electron": "wait-on dist/renderer/index.html && wait-on dist/main/main.js && electron .",
+    "build": "npm run build:renderer && npm run build:main && npm run build:preload",
+    "build:main": "webpack --config webpack.main.config.js",
+    "build:main:watch": "webpack --config webpack.main.config.js --watch",
+    "build:preload": "webpack --config webpack.preload.config.js",
+    "build:renderer": "webpack --config webpack.renderer.config.js",
+    "build:renderer:watch": "webpack --config webpack.renderer.config.js --watch",
+    "package": "npm run build && electron-builder"
+  },
+  "keywords": [
+    "investment",
+    "portfolio",
+    "electron"
+  ],
+  "author": "TRII",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "concurrently": "^8.2.2",
+    "css-loader": "^6.8.1",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "html-webpack-plugin": "^5.6.0",
+    "postcss": "^8.4.32",
+    "postcss-loader": "^7.3.4",
+    "style-loader": "^3.3.3",
+    "tailwindcss": "^3.4.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "wait-on": "^7.2.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "lucide-react": "^0.562.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-error-boundary": "^6.0.1",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^2.10.3",
+    "zustand": "^5.0.9"
+  },
+  "build": {
+    "appId": "com.trii.desktop",
+    "productName": "TRII Investment Platform",
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "dist/**/*",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../../infrastructure/docker/docker-compose.yml",
+        "to": "docker/docker-compose.yml"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.finance",
+      "icon": "resources/icons/mac/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "resources/entitlements.mac.plist",
+      "entitlementsInherit": "resources/entitlements.mac.plist"
+    },
+    "dmg": {
+      "background": "resources/installer/mac/dmg-background.png",
+      "icon": "resources/installer/mac/dmg-icon.icns",
+      "iconSize": 128,
+      "contents": [
+        {
+          "x": 380,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 160,
+          "y": 180,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "win": {
+      "icon": "resources/icons/win/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "resources/icons/win/icon.ico",
+      "uninstallerIcon": "resources/icons/win/icon.ico",
+      "installerHeader": "resources/installer/windows/header.png",
+      "installerSidebar": "resources/installer/windows/sidebar.png",
+      "uninstallerSidebar": "resources/installer/windows/sidebar.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TRII Platform"
+    },
+    "linux": {
+      "icon": "resources/icons/png/",
+      "category": "Office;Finance",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "synopsis": "Professional Investment Decision Support Platform",
+      "description": "TRII Investment Platform provides real-time market analysis, portfolio management, and ML-powered investment insights."
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "arheanja",
+      "repo": "investment-app"
+    }
+  }
+}

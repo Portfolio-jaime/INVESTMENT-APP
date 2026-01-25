@@ -1,0 +1,22 @@
+{
+  "name": "fastify-backend",
+  "version": "1.0.0",
+  "description": "Fastify backend for investment app",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "echo 'No tests specified'",
+    "build": "echo 'No build step required'",
+    "build:docker": "docker build -t fastify-backend ."
+  },
+  "dependencies": {
+    "fastify": "^4.24.3",
+    "@fastify/cors": "^8.5.0",
+    "@fastify/jwt": "^7.2.4"
+  },
+  "devDependencies": {},
+  "keywords": ["fastify", "api", "investments"],
+  "author": "",
+  "license": "ISC"
+}

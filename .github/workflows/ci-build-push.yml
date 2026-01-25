@@ -1,0 +1,95 @@
+name: CI Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract Git SHA
+        id: extract_sha
+        run: echo "SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Build and push backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend/fastify-backend
+          push: true
+          tags: |
+            jaimehenao8126/fastify-backend:${{ steps.extract_sha.outputs.SHA }}
+            jaimehenao8126/fastify-backend:latest
+
+      - name: Update backend Helm chart values
+        run: |
+          # Install yq
+          sudo snap install yq || (sudo wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq)
+
+          # Update the image tag in helm/backend/values.yaml
+          yq eval '.image.tag = "${{ steps.extract_sha.outputs.SHA }}"' -i helm/backend/values.yaml
+
+      - name: Commit and push changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add helm/backend/values.yaml
+          git commit -m "Update backend image tag to ${{ steps.extract_sha.outputs.SHA }} [skip ci]"
+          git push
+
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract Git SHA
+        id: extract_sha
+        run: echo "SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/next-frontend
+          push: true
+          tags: |
+            jaimehenao8126/next-frontend:${{ steps.extract_sha.outputs.SHA }}
+            jaimehenao8126/next-frontend:latest
+
+      - name: Update frontend Helm chart values
+        run: |
+          # Install yq
+          sudo snap install yq || (sudo wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq)
+
+          # Update the image tag in helm/frontend/values.yaml
+          yq eval '.image.tag = "${{ steps.extract_sha.outputs.SHA }}"' -i helm/frontend/values.yaml
+
+      - name: Commit and push changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add helm/frontend/values.yaml
+          git commit -m "Update frontend image tag to ${{ steps.extract_sha.outputs.SHA }} [skip ci]"
+          git push

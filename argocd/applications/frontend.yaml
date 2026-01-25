@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP # Replace with your GitHub repository URL
+    targetRevision: HEAD
+    path: helm/frontend # This path is specific to the frontend chart
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default # Deploy frontend in the default namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

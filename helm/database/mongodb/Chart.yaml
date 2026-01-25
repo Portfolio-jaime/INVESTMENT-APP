@@ -1,0 +1,11 @@
+apiVersion: v2
+name: mongodb
+description: A Helm chart for MongoDB, using Bitnami as a subchart
+type: application
+version: 0.1.0
+appVersion: "5.0.0" # This should match the MongoDB version you want to deploy
+
+dependencies:
+  - name: mongodb
+    version: 18.3.0 # Use a specific stable version of Bitnami MongoDB chart
+    repository: https://charts.bitnami.com/bitnami
