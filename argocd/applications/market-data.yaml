@@ -6,7 +6,7 @@ metadata:
 spec:
   project: trii-platform
   source:
-    repoURL: https://github.com/your-org/investment-app.git
+    repoURL: https://github.com/Portfolio-jaime/INVESTMENT-APP
     targetRevision: main
     path: helm/charts/market-data
     helm:
